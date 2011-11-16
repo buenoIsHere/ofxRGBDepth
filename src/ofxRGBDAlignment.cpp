@@ -9,18 +9,9 @@
 
 #include "ofxRGBDAlignment.h"
 
-const float
-k1 = 0.1236,
-k2 = 2842.5,
-k3 = 1.1863,
-k4 = 0.0370;
-
-static float rawToCentimeters(float raw) {
-	return 100 * (k1 * tan((raw / k2) + k3) - k4);
-}
 
 ofxRGBDAlignment::ofxRGBDAlignment() {
-	
+	xshift = yshift = 0;
 }
 
 //-----------------------------------------------
@@ -79,6 +70,7 @@ bool ofxRGBDAlignment::addCalibrationImagePair(ofPixels &ir, ofPixels &camera) {
 		cout << "Kinect to Color:" << endl << rotationDepthToColor << endl << translationDepthToColor << endl;
 		cout << "Color to Kinect:" << endl << rotationColorToDepth << endl << translationColorToDepth << endl;
 
+		cout << "ERROR::: " << depthCalibration.getReprojectionError() << endl;
 		return true;
 	}
 	
@@ -156,23 +148,6 @@ void ofxRGBDAlignment::setDepthImage(unsigned short* depthImage) {
 	hasDepthImage = true;
 }
 
-void ofxRGBDAlignment::update() {
-
-	if(colorCalibration.isReady() && depthCalibration.isReady()){
-//		updatePointCloud();
-//		cout << "PP " << depthCalibration.getUndistortedIntrinsics().getPrincipalPoint() << endl;
-//		updateColors();
-//		updateMesh();
-	}		
-}
-
-//void ofxRGBDAlignment::updatePointCloud(ofxKinect& kinect){
-// 	int w = kinect.getWidth();
-//	int h = kinect.getHeight();
-//    
-//    updatePointCloud(kinect.getRawDepthPixels(), w, h);
-//}
-
 void ofxRGBDAlignment::updatePointCloud(unsigned short* depthPixelsRaw, int w, int h){
 	
 	////METHOD 1 custom cloud
@@ -185,9 +160,11 @@ void ofxRGBDAlignment::updatePointCloud(unsigned short* depthPixelsRaw, int w, i
 	
 	Point2d principalPoint = depthCalibration.getUndistortedIntrinsics().getPrincipalPoint();
 	cv::Size imageSize = depthCalibration.getUndistortedIntrinsics().getImageSize();
-
+	
+	
     currentDepthImage = depthPixelsRaw;
-
+	hasDepthImage = true;
+	
 	int validPointCount = 0;
 	ofVec3f center(0,0,0);
 	for(int y = 0; y < h; y++) {
@@ -195,8 +172,8 @@ void ofxRGBDAlignment::updatePointCloud(unsigned short* depthPixelsRaw, int w, i
 
 			//float pixel = rawToCentimeters( currentDepthImage[y*w+j] );
             unsigned short z = currentDepthImage[y*w+x];
-            float xReal = (((float) x - principalPoint.x) / imageSize.width) * z * fx;
-            float yReal = (((float) y - principalPoint.y) / imageSize.height) * z * fy;
+            float xReal = (((float) x - principalPoint.x) / imageSize.width) * z * fx + xshift;
+            float yReal = (((float) y - principalPoint.y) / imageSize.height) * z * fy + yshift;
             // add each point into pointCloud
             pointCloud.push_back(Point3f(xReal, yReal, z));
             if(z > 1){
@@ -206,36 +183,27 @@ void ofxRGBDAlignment::updatePointCloud(unsigned short* depthPixelsRaw, int w, i
             }
 		}
 	}
-    if(ofGetFrameNum() % 100 == 0){
-        cout << validPointCount << " vertices added " << endl;
-    }
+	
+
+//    if(ofGetFrameNum() % 100 == 0){
+//        cout << validPointCount << " vertices added " << endl;
+//    }
     
     meshCenter = center / validPointCount;
 	meshDistance = 0;
 	for(int i = 0; i < pointCloud.size(); i++){
-		float thisDistance = center.distance(ofVec3f(pointCloud[i].x,
-													 pointCloud[i].y,
-													 pointCloud[i].z));
-		if(thisDistance > meshDistance){
-			meshDistance = thisDistance;
+		if(pointCloud[i].z > 1){
+			float thisDistance = center.distance(ofVec3f(pointCloud[i].x,
+														 pointCloud[i].y,
+														 pointCloud[i].z));
+			if(thisDistance > meshDistance){
+				meshDistance = thisDistance;
+			}
 		}
 	}
     
-    cout << "mesh center " <<  meshCenter << endl;
-
+//    cout << "mesh center " <<  meshCenter << " distance " << meshDistance << endl;
 		
-/*
-	////METHOD 2 kinect's cloud
-	for(int y = 0; y < kinect.getHeight(); y++){
-		for(int x = 0; x < kinect.getWidth(); x++){
-			float color = kinect.getPixelsRef().getColor(x, y).getBrightness();
-			ofVec3f worldp = kinect.getWorldCoordinateAt(x, y);
-			pointCloud.push_back(toCv(worldp));
-		}
-	}
-*/
-	
-
 	updateColors();
     updateMesh();
 }
@@ -249,7 +217,6 @@ void ofxRGBDAlignment::updateMesh() {
 	//	cout << "Trans Depth->Color " << translationDepthToColor << endl;
 	//	cout << "Intrs Cam " << colorCalibration.getDistortedIntrinsics().getCameraMatrix() << endl;
 	//	cout << "Intrs Dist Coef " << colorCalibration.getDistCoeffs() << endl;
-	
 	imagePoints.clear();
 	projectPoints(pcMat,
 				  rotationDepthToColor, translationDepthToColor,
@@ -277,11 +244,13 @@ void ofxRGBDAlignment::updateMesh() {
 	int facesAdded = 0;
 	mesh.clearIndices();
     indeces.clear();
-    zthresh = .3;
+    zthresh = ofGetMouseY();
+
+	//zthresh = 600;
 	for (int y = 0; y < h-1; y++){
 		for (int x=0; x < w-1; x++){
-			if(pointCloud[x+y*w].z > zthresh ||
-			   pointCloud[(x+1)+y*w].z > zthresh ||
+			if(pointCloud[x+y*w].z > zthresh &&
+			   pointCloud[(x+1)+y*w].z > zthresh &&
 			   pointCloud[x+(y+1)*w].z > zthresh)
 			{
                 indeces.push_back(x+y*w);
@@ -294,8 +263,8 @@ void ofxRGBDAlignment::updateMesh() {
 				facesAdded++;
 			}
 			
-			if(pointCloud[(x+1)+y*w].z > zthresh ||
-			   pointCloud[x+(y+1)*w].z > zthresh ||
+			if(pointCloud[(x+1)+y*w].z > zthresh &&
+			   pointCloud[x+(y+1)*w].z > zthresh &&
 			   pointCloud[(x+1)+(y+1)*w].z > zthresh)
 			{
                 indeces.push_back((x+1)+y*w);
@@ -312,11 +281,7 @@ void ofxRGBDAlignment::updateMesh() {
 
 //    vbo.setIndexData(&indeces[0], indeces.size(), GL_STREAM_DRAW);
 //    vbo.setVertexData(&vertices[0], vertices.size(), GL_STREAM_DRAW);
-//    vbo.setTexCoordData(&texcoords[0], texcoords.size(), GL_STREAM_DRAW);
-    
-    if(ofGetFrameNum() % 100 == 0){
-        cout << "faces added " << facesAdded << endl;
-    }
+//    vbo.setTexCoordData(&texcoords[0], texcoords.size(), GL_STREAM_DRAW);    
 }
 
 /*
@@ -406,6 +371,10 @@ void ofxRGBDAlignment::drawMesh() {
 }
 
 void ofxRGBDAlignment::drawPointCloud() {
+	
+//	if(colorCalibration.isReady()){
+//		return;
+//	}
 	
 	ofPushStyle();
 	

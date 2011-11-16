@@ -14,5 +14,8 @@ class ofxKinectPointcloudDecoder {
   public:
 	unsigned short* readDepthFrame(string filename, unsigned short* outbuf = NULL);
 	unsigned short* readDepthFrame(ofFile file, unsigned short* outbuf = NULL);
-
+	
+	ofImage readDepthFrametoImage(string filename);
+	ofImage convertTo8BitImage(unsigned short* buf);
+	
 };

@@ -29,8 +29,6 @@ class ofxRGBDAlignment {
 	void setColorImage(ofImage& colorImage);
 	void setDepthImage(unsigned short* pixels);
     void updatePointCloud(unsigned short* depthPixelsRaw, int w, int h);
-    
-	void update(); //updates current mesh
 
 	void drawMesh();
 	void drawPointCloud();
@@ -44,7 +42,8 @@ class ofxRGBDAlignment {
 	ofVec3f getMeshCenter();
 	float getMeshDistance();
 	float zthresh;
-    
+    float yshift;
+	float xshift;
   protected:
 	bool hasDepthImage;
 	bool hasColorImage;
