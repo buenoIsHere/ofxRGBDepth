@@ -1,4 +1,4 @@
-/*
+	/*
  *  ofxCvCheckerboardPreview.cpp
  *  DepthExternalRGB
  *
@@ -14,10 +14,12 @@ void ofxCvCheckerboardPreview::setup(int squaresWide, int squaresTall, int squar
 	boardFound = false;
 	newBoardToFind = false;
 	
+	squarePixelSize = 11;
 	calib.setPatternSize(squaresWide, squaresTall);
 	calib.setSquareSize(squareSize);
-	
+	calib.setSubpixelSize(squareSize);
 	boardLastFoundTime = 0;
+	
 	
 	startThread(true, false);
 
@@ -44,10 +46,6 @@ bool ofxCvCheckerboardPreview::currentImageHasCheckerboard() {
 	return boardFound;
 }
 
-//void ofxCvCheckerboardPreview::draw(ofVec2f point){
-//	
-//}
-
 void ofxCvCheckerboardPreview::draw(){
 	draw(ofRectangle(0,0,testImage.getWidth(), testImage.getHeight()) );
 }
@@ -62,27 +60,48 @@ void ofxCvCheckerboardPreview::draw(const ofRectangle& rect){
 	points = imagePoints;
 	drawLock.unlock();
 	
-	float alpha = ofMap(ofGetElapsedTimef(), boardLastFoundTime+.5, boardLastFoundTime+2, 255, 0, true);
+	//float alpha = ofMap(ofGetElapsedTimef(), boardLastFoundTime+.5, boardLastFoundTime+2, 255, 0, true);
+	float alpha = 255;
 	
 	ofPushStyle();
 	ofSetColor(255, 0,0, alpha);
+	ofFill();
 	
 	float x, y;
 	for (int i = 0; i < imagePoints.size(); ++i) {
 		x = ofMap(imagePoints[i].x, 0, testImage.getWidth(), rect.x, rect.x + rect.width, false);
 		y = ofMap(imagePoints[i].y, 0, testImage.getHeight(), rect.y, rect.y + rect.height, false);
 		
-		ofCircle(x, y, 5);
+		ofCircle(x, y, 3);
 	}
 	
 	ofPopStyle();
 }
 
 
+void ofxCvCheckerboardPreview::setSmallestSquarePixelsize(int squareSize){
+	if(squareSize != squarePixelSize){
+		squarePixelSize = squareSize;
+		calib.setSubpixelSize(squareSize);
+		if(testImage.isAllocated()){
+			newBoardToFind = true;
+		}
+	}
+}
+
+int ofxCvCheckerboardPreview::getSmallestSquarePixelsize(){
+	return squarePixelSize;
+}
+
+Calibration& ofxCvCheckerboardPreview::getCalibration(){
+	return calib;
+}
+
 void ofxCvCheckerboardPreview::threadedFunction() {
 	
 	while (isThreadRunning()){
 		if(newBoardToFind){
+			
 			lock();
 			memcpy(internalPixels.getPixels(), testImage.getPixels(), testImage.getWidth()*testImage.getHeight()); 
 			unlock();
@@ -95,7 +114,12 @@ void ofxCvCheckerboardPreview::threadedFunction() {
 				imagePoints = points;
 				drawLock.unlock();
 			}
-			
+			else{
+				drawLock.lock();
+				imagePoints.clear();
+				drawLock.unlock();
+				
+			}
 			newBoardToFind = false;
 		}
 	}

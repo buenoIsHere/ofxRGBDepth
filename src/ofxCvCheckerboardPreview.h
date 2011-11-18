@@ -20,10 +20,14 @@ class ofxCvCheckerboardPreview : public ofThread {
 	void setup(int squaresWide, int squaresTall, int squareSize); //starts the thread
 	
 	void setTestImage(ofPixels& pixels);
+	void setSmallestSquarePixelsize(int squarePixelSize);
 	bool currentImageHasCheckerboard();	
 	void draw();
 	void draw(ofVec2f point);
 	void draw(const ofRectangle& rect);
+
+	int getSmallestSquarePixelsize();
+	Calibration& getCalibration();
 	
 	void quit(); //stops thread
 	
@@ -31,6 +35,7 @@ class ofxCvCheckerboardPreview : public ofThread {
 	
 	void threadedFunction();
 	float boardLastFoundTime;
+	int squarePixelSize;
 	ofPixels testImage;
 	ofPixels internalPixels;
 	vector<Point2f> imagePoints;

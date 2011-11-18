@@ -37,13 +37,18 @@ class ofxRGBDAlignment {
 	void loadCalibration();
 	void resetCalibration();
 
+	Calibration & getKinectCalibration();
+	Calibration & getExternalCalibration();
+	
 	void drawCalibration(bool left);
     
 	ofVec3f getMeshCenter();
 	float getMeshDistance();
+	
 	float zthresh;
     float yshift;
 	float xshift;
+	
   protected:
 	bool hasDepthImage;
 	bool hasColorImage;

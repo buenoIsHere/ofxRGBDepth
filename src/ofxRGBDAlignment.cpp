@@ -53,10 +53,10 @@ bool ofxRGBDAlignment::addCalibrationImagePair(ofPixels &ir, ofPixels &camera) {
 		}		
 	}
 	
-	if(depthCalibration.imagePoints.size() != colorCalibration.imagePoints.size()){
-		ofLogError("ofxRGBDAlignment -- image point sizes differ!");
-		return false;
-	}
+//	if(depthCalibration.imagePoints.size() != colorCalibration.imagePoints.size()){
+//		ofLogError("ofxRGBDAlignment -- image point sizes differ!");
+//		return false;
+//	}
 	
 	if(depthCalibration.imagePoints.size() > 3){
 		depthCalibration.calibrate();
@@ -70,7 +70,8 @@ bool ofxRGBDAlignment::addCalibrationImagePair(ofPixels &ir, ofPixels &camera) {
 		cout << "Kinect to Color:" << endl << rotationDepthToColor << endl << translationDepthToColor << endl;
 		cout << "Color to Kinect:" << endl << rotationColorToDepth << endl << translationColorToDepth << endl;
 
-		cout << "ERROR::: " << depthCalibration.getReprojectionError() << endl;
+		cout << "Depth ERROR::: " << depthCalibration.getReprojectionError() << endl;
+		cout << "Color ERROR::: " << colorCalibration.getReprojectionError() << endl;
 		return true;
 	}
 	
@@ -118,7 +119,15 @@ void ofxRGBDAlignment::loadCalibration() {
 void ofxRGBDAlignment::resetCalibration() {
 	//TODO:
 }
-	
+
+Calibration & ofxRGBDAlignment::getKinectCalibration(){
+	return depthCalibration;
+}
+
+Calibration & ofxRGBDAlignment::getExternalCalibration(){
+	return colorCalibration;
+}
+
 /*
 void ofxRGBDAlignment::saveCalibration(Calibration& from, Calibration& to, string filename) {
 	Mat rotation, translation;
