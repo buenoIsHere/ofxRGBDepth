@@ -10,20 +10,30 @@
 #pragma once
 
 #include "ofMain.h"
-#include "ofxKinect.h";
-#include "ofxCv.h"
-
-using namespace ofxCv;
-using namespace cv;
 
 class ofxKinectPointcloudRecorder : ofThread {
   public:
 	ofxKinectPointcloudRecorder();
+	~ofxKinectPointcloudRecorder();
+	
+	//ENCODE
 	void setup();
 	void setRecordLocation(string directory, string filePrefix);
 	void addImage(unsigned short* image);
 	void incrementFolder(ofImage posterFrame);
     
+	void saveToCompressedPng(string filename, unsigned short* buf);
+	
+	
+	//DECODE
+	unsigned short* readDepthFrame(string filename, unsigned short* outbuf = NULL);
+	unsigned short* readDepthFrame(ofFile file, unsigned short* outbuf = NULL);
+	
+	unsigned short* readCompressedPng(string filename, unsigned short* outbuf = NULL);
+	
+	ofImage readDepthFrametoImage(string filename);
+	ofImage convertTo8BitImage(unsigned short* buf);
+	
   protected:
 	void threadedFunction();
 	int folderCount;
@@ -32,5 +42,6 @@ class ofxKinectPointcloudRecorder : ofThread {
 	string targetFilePrefix;
 	int currentFrame;
 	queue<unsigned short*> saveQueue;
+	unsigned char* pngPixs;
 	bool isRecording;
 };
