@@ -157,20 +157,22 @@ unsigned short* ofxKinectPointcloudRecorder::readCompressedPng(string filename, 
 	if(outbuf == NULL){
 		outbuf = new unsigned short[640*480];
 	}
-	float startTime = ofGetElapsedTimeMillis();
+//	float startTime = ofGetElapsedTimeMillis();
 	
 	int totalDif = 0;
 	ofImage compressedImage;
 	if(!compressedImage.loadImage(filename)){
-		ofLogError("ofxKinectPointcloudRecorder == Couldn't read compressed frame " + filename);
+		ofLogError("ofxKinectPointcloudRecorder -- Couldn't read compressed frame " + filename);
+		return outbuf;
 	}
+	
 	unsigned char* compressedPix = compressedImage.getPixels();
 	
 	for(int i = 0; i < 640*480; i++){
 		outbuf[i] = (compressedPix[i*3] << 8) | compressedPix[i*3+1];
 	}
 	
-	cout << "decompressed in " << (ofGetElapsedTimeMillis() - startTime) << endl;
+//	cout << "decompressed in " << (ofGetElapsedTimeMillis() - startTime) << endl;
 	
 	return outbuf;
 }

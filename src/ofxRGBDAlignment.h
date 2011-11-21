@@ -26,15 +26,16 @@ class ofxRGBDAlignment {
 	bool calibrateFromDirectoryPair(string irImageDirectory, string colorImageDirectory);
 	bool ready();
 
-	void setColorImage(ofImage& colorImage);
-	void setDepthImage(unsigned short* pixels);
-    void updatePointCloud(unsigned short* depthPixelsRaw, int w, int h);
+	//void setColorImage(ofImage& colorImage);
+	void setColorTexture(ofBaseHasTexture& colorImage); 
+	
+    void update(unsigned short* depthPixelsRaw);
 
 	void drawMesh();
 	void drawPointCloud();
 	
 	void saveCalibration();
-	void loadCalibration();
+	void loadCalibration(string calibrationDirectory);
 	void resetCalibration();
 
 	Calibration & getKinectCalibration();
@@ -58,7 +59,7 @@ class ofxRGBDAlignment {
 //	vector<ofVec2f> texcoords;
 //	vector<ofVec3f> vertices;
 	
-	ofImage currentColorImage;
+	ofBaseHasTexture* currentColorImage;
 	unsigned short* currentDepthImage;
 	
 	void updatePointCloud();
@@ -67,12 +68,11 @@ class ofxRGBDAlignment {
 	
 	//TEMP until we convert to mesh
 	vector<Point2f> imagePoints;
-	vector<Point3f> pointCloud;
-	vector<Point3f> pointCloudColors;
+//	vector<Point3f> pointCloud;
+//	vector<Point3f> pointCloudColors;
 
     
 	ofVboMesh mesh;
-	ofVbo vbo;
     vector<ofIndexType> indeces;
     vector<ofVec2f> texcoords;
     vector<ofVec3f> vertices;

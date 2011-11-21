@@ -27,8 +27,7 @@ class ofxKinectPointcloudRecorder : ofThread {
 	
 	//DECODE
 	unsigned short* readDepthFrame(string filename, unsigned short* outbuf = NULL);
-	unsigned short* readDepthFrame(ofFile file, unsigned short* outbuf = NULL);
-	
+	unsigned short* readDepthFrame(ofFile file, unsigned short*  outbuf = NULL);
 	unsigned short* readCompressedPng(string filename, unsigned short* outbuf = NULL);
 	
 	ofImage readDepthFrametoImage(string filename);
