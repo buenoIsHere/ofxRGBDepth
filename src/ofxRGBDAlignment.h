@@ -22,7 +22,7 @@ class ofxRGBDAlignment {
 	
 	void setup(int squaresWide, int squaresTall, int squareSize);
 	
-	bool addCalibrationImagePair(ofPixels& ir, ofPixels &camera);	//TODO: set calibration files
+	bool addCalibrationImagePair(ofPixels& ir, ofPixels &camera);
 	bool calibrateFromDirectoryPair(string irImageDirectory, string colorImageDirectory);
 	bool ready();
 
@@ -30,7 +30,8 @@ class ofxRGBDAlignment {
 	void setColorTexture(ofBaseHasTexture& colorImage); 
 	
     void update(unsigned short* depthPixelsRaw);
-
+	void update();
+	
 	void drawMesh();
 	void drawPointCloud();
 	
@@ -40,13 +41,14 @@ class ofxRGBDAlignment {
 
 	Calibration & getKinectCalibration();
 	Calibration & getExternalCalibration();
+	//populated with vertices, texture coords, and indeces
+	ofMesh & getMesh();
 	
 	void drawCalibration(bool left);
     
 	ofVec3f getMeshCenter();
 	float getMeshDistance();
 	
-	float zthresh;
     float yshift;
 	float xshift;
 	
@@ -54,24 +56,13 @@ class ofxRGBDAlignment {
 	bool hasDepthImage;
 	bool hasColorImage;
 	bool hasPointCloud;
-	
-//	vector<ofIndexType> indeces;
-//	vector<ofVec2f> texcoords;
-//	vector<ofVec3f> vertices;
-	
+		
 	ofBaseHasTexture* currentColorImage;
 	unsigned short* currentDepthImage;
 	
-	void updatePointCloud();
-	void updateColors();
-	void updateMesh();
+	ofShader renderShader;
 	
-	//TEMP until we convert to mesh
-	vector<Point2f> imagePoints;
-//	vector<Point3f> pointCloud;
-//	vector<Point3f> pointCloudColors;
-
-    
+	vector<Point2f> imagePoints;    
 	ofVboMesh mesh;
     vector<ofIndexType> indeces;
     vector<ofVec2f> texcoords;
@@ -80,7 +71,6 @@ class ofxRGBDAlignment {
 	Calibration depthCalibration, colorCalibration;    
 	Mat rotationDepthToColor, translationDepthToColor;
 	Mat rotationColorToDepth, translationColorToDepth;
-	
 	Mat rotation, translation;
 	
 	ofVec3f meshCenter;

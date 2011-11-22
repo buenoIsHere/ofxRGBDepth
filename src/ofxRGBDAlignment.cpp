@@ -31,11 +31,11 @@ void ofxRGBDAlignment::setup(int squaresWide, int squaresTall, int squareSize) {
 	
 	colorCalibration.setPatternSize(squaresWide, squaresTall);
 	colorCalibration.setSquareSize(squareSize);
+
+	//bin -> appname -> category -> apps -> of
+	renderShader.load("../../../../../addons/ofxRGBDepth/assets/renderShader");
 	
 	mesh.setUsage(GL_STREAM_DRAW);
-//	mesh.getVertices().reserve(640*480);
-//	mesh.getIndices().reserve(640*480*3);
-//	mesh.getTexCoords().reserve(640*480);	
 }
 
 //-----------------------------------------------
@@ -132,29 +132,22 @@ void ofxRGBDAlignment::setColorTexture(ofBaseHasTexture& colorImage) {
 }
 
 //-----------------------------------------------
-
-
 void ofxRGBDAlignment::update(unsigned short* depthPixelsRaw){
+	currentDepthImage = depthPixelsRaw;
+	hasDepthImage = true;
+	update();
+}
+
+void ofxRGBDAlignment::update(){
 	int w = 640;
 	int h = 480;
 	
-	currentDepthImage = depthPixelsRaw;
-	hasDepthImage = true;
-	
-//	pointCloud.clear();
-
 	Point2d fov = depthCalibration.getUndistortedIntrinsics().getFov();
 	float fx = tanf(ofDegToRad(fov.x) / 2) * 2;
 	float fy = tanf(ofDegToRad(fov.y) / 2) * 2;
 	
 	Point2d principalPoint = depthCalibration.getUndistortedIntrinsics().getPrincipalPoint();
 	cv::Size imageSize = depthCalibration.getUndistortedIntrinsics().getImageSize();
-	
-	
-    currentDepthImage = depthPixelsRaw;
-	hasDepthImage = true;
-	
-	xshift = yshift = 0;
 	
 	int validPointCount = 0;
 	ofVec3f center(0,0,0);
@@ -176,40 +169,8 @@ void ofxRGBDAlignment::update(unsigned short* depthPixelsRaw){
 				mesh.addVertex(vert);
 			}
 			index++;
-            if(z > 1){
-                //pointCloud.push_back(Point3f(x/640.0, y/640., 0));
-                center += ofVec3f(xReal, yReal, z);
-                validPointCount++;
-            }
 		}
 	}
-	
-//	for(; index < 640*480; index++){
-//		mesh.getVertices()[index] = ofVec3f(0,0,0);
-//	}
-	
-//    meshCenter = center / validPointCount;
-//	meshDistance = 0;
-//	for(int i = 0; i < pointCloud.size(); i++){
-//		if(pointCloud[i].z > 1){
-//			float thisDistance = center.distance(ofVec3f(pointCloud[i].x,
-//														 pointCloud[i].y,
-//														 pointCloud[i].z));
-//			if(thisDistance > meshDistance){
-//				meshDistance = thisDistance;
-//			}
-//		}
-//	}
-    
-//    cout << "mesh center " <<  meshCenter << " distance " << meshDistance << endl;
-		
-	updateColors();
-    updateMesh();
-}
-
-void ofxRGBDAlignment::updateMesh() {
-	
-//	cout << "mesh has " << mesh.getVertices().size() << " vertices " << endl;
 	
 	Mat pcMat = Mat(toCv(mesh));
 	
@@ -226,20 +187,9 @@ void ofxRGBDAlignment::updateMesh() {
 				  colorCalibration.getDistCoeffs(),
 				  imagePoints);
 	
-//    texcoords.clear();
-//    vertices.clear();
-//	mesh.clearVertices();
-	int index = 0;
-	
+	index = 0;	
 	for(int i = 0; i < imagePoints.size(); i++) {
 		ofVec2f textureCoord = ofVec2f(imagePoints[i].x, imagePoints[i].y);
-		//int j = (int)imagePoints[i].y * currentColorImage->getTextureReference().getWidth() + (int)imagePoints[i].x;
-		//ofFloatColor color;
-		//color = ofFloatColor(1, 1, 1, 1);		
-        //vertices.push_back( toOf(pointCloud[i]) );
-        //texcoords.push_back( textureCoord );
-        
-		//mesh.setColor(i, color);
 		if(mesh.getTexCoords().size() > index){
 			mesh.setTexCoord(i, textureCoord);
 		}
@@ -247,111 +197,45 @@ void ofxRGBDAlignment::updateMesh() {
 			mesh.addTexCoord(textureCoord);
 		}
 		index++;
-//		mesh.addVertex(toOf(pointCloud[i]));
 	}
     
 	int facesAdded = 0;
-	int indecesAdded = 0;
-
-	int w = 640;
-	int h = 480;
+	int indecesAdded = 0;	
 	for (int y = 0; y < h-1; y++){
 		for (int x=0; x < w-1; x++){
 			ofIndexType a,b,c;
 			a = x+y*w;
 			b = (x+1)+y*w;
 			c = x+(y+1)*w;
-			if(mesh.getVertices()[a].z > zthresh &&
-			   mesh.getVertices()[b].z > zthresh &&
-			   mesh.getVertices()[c].z > zthresh)
-			{                
-				if(mesh.getIndices().size() > indecesAdded){
-					mesh.setIndex(indecesAdded++, a);// 0
-					mesh.setIndex(indecesAdded++, b);			// 1
-					mesh.setIndex(indecesAdded++, c);		// 10									
-				}
-				else{
-					mesh.addTriangle(a, b, c);
-					indecesAdded+=3;
-				}
-				facesAdded++;
+			if(mesh.getIndices().size() > indecesAdded){
+				mesh.setIndex(indecesAdded++, a);		// 0
+				mesh.setIndex(indecesAdded++, b);		// 1
+				mesh.setIndex(indecesAdded++, c);		// 10									
 			}
+			else{
+				mesh.addTriangle(a, b, c);
+				indecesAdded+=3;
+			}
+			facesAdded++;
+			
 			a = (x+1)+y*w;
 			b = x+(y+1)*w;
 			c = (x+1)+(y+1)*w;
-			if(mesh.getVertices()[a].z > zthresh &&
-			   mesh.getVertices()[b].z > zthresh &&
-			   mesh.getVertices()[c].z > zthresh)
-			{        
-				if(mesh.getIndices().size() > indecesAdded){
-					mesh.setIndex(indecesAdded++, a);// 0
-					mesh.setIndex(indecesAdded++, b);			// 1
-					mesh.setIndex(indecesAdded++, c);		// 10									
-				}
-				else{
-					mesh.addTriangle(a, b, c);
-					indecesAdded+=3;
-				}
+			if(mesh.getIndices().size() > indecesAdded){
+				mesh.setIndex(indecesAdded++, a);		// 0
+				mesh.setIndex(indecesAdded++, b);		// 1
+				mesh.setIndex(indecesAdded++, c);		// 10									
+			}
+			else{
+				mesh.addTriangle(a, b, c);
+				indecesAdded+=3;
 			}
 		}
-	}
-	
-//	for(int i = indecesAdded; i < 
+	}	
 }
 
-/*
-void ofxRGBDAlignment::setPointCloud(vector<Point3f>& newCloud){
-//	pointCloud.clear();
-//	for(int i = 0; i < newCloud.size(); i++){
-//		pointCloud.push_back( toCv(newCloud[i]) );
-//	}
-	pointCloud = newCloud;
-	if(colorCalibration.isReady() && depthCalibration.isReady()){
-		updateColors();
-		//updateMesh();
-	}
-}
-*/
-
-void ofxRGBDAlignment::updateColors() {
-//	pointCloudColors.clear();
-//	imagePoints.clear();
-	
-	// rotate, translate the points to fit the colorCalibration perspective
-	// and project them onto the colorCalibration image space
-	// and undistort them
-/*
-	Mat pcMat = Mat(pointCloud);
-	
-	//cout << "PC " << pcMat << endl;
-	//	cout << "Rot Depth->Color " << rotationDepthToColor << endl;
-	//	cout << "Trans Depth->Color " << translationDepthToColor << endl;
-	//	cout << "Intrs Cam " << colorCalibration.getDistortedIntrinsics().getCameraMatrix() << endl;
-	//	cout << "Intrs Dist Coef " << colorCalibration.getDistCoeffs() << endl;
-
-	projectPoints(pcMat,
-				  rotationDepthToColor, translationDepthToColor,
-				  colorCalibration.getDistortedIntrinsics().getCameraMatrix(),
-				  colorCalibration.getDistCoeffs(),
-				  imagePoints);
-
-	// get the color at each of the projectedPoints inside curColor
-	// add them into pointCloudColors
-	int w = currentColorImage->getTextureReference().getWidth();
-	int h = currentColorImage->getTextureReference().getHeight();
-	int n = w * h;
-	unsigned char* pixels = currentColorImage->getPixels();
-	for(int i = 0; i < imagePoints.size(); i++) {
-		int j = (int) imagePoints[i].y * w + (int) imagePoints[i].x;
-		//pointCloudColors.push_back(Point3f(1, 1, 1));
-		if(j < 0 || j >= n) {
-			pointCloudColors.push_back(Point3f(0, 0, 0));
-		} else {
-			j *= 3;
-			pointCloudColors.push_back(Point3f(pixels[j + 0] / 255.f, pixels[j + 1] / 255.f, pixels[j + 2] / 255.f));
-		}
-	}
-	*/
+ofMesh& ofxRGBDAlignment::getMesh(){
+	return mesh;
 }
 
 void ofxRGBDAlignment::drawCalibration(bool left){
@@ -378,7 +262,6 @@ void ofxRGBDAlignment::drawMesh() {
 	glEnable(GL_DEPTH_TEST);
 	currentColorImage->getTextureReference().bind();
 	mesh.drawFaces();
-    //vbo.drawElements(GL_TRIANGLES, indeces.size()/3);
 	currentColorImage->getTextureReference().unbind();
 	glDisable(GL_DEPTH_TEST);
 	
@@ -388,10 +271,6 @@ void ofxRGBDAlignment::drawMesh() {
 }
 
 void ofxRGBDAlignment::drawPointCloud() {
-	
-//	if(colorCalibration.isReady()){
-//		return;
-//	}
 	
 	ofPushStyle();
 	
