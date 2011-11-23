@@ -286,7 +286,6 @@ void ofxRGBDAlignment::drawPointCloud() {
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
     
-	//glColorPointer(3, GL_FLOAT, sizeof(ofVec3f), &(pointCloudColors[0].x));
 	glTexCoordPointer(2, GL_FLOAT, sizeof(ofVec2f), &(mesh.getTexCoords()[0].x));
 	glVertexPointer(3, GL_FLOAT, sizeof(ofVec3f), &(mesh.getVertices()[0].x));
                    

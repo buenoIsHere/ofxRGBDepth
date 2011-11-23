@@ -73,7 +73,7 @@ void ofxRGBDVideoDepthSequence::removeAlignedPair(int index){
 }
 
 bool ofxRGBDVideoDepthSequence::ready(){
-	alignedFrames.size() >= 2;
+	return alignedFrames.size() >= 2;
 }
 
 int ofxRGBDVideoDepthSequence::getDepthFrameForVideoFrame(int videoFrame){

@@ -11,6 +11,8 @@
 
 ofxKinectPointcloudRecorder::ofxKinectPointcloudRecorder(){
 	pngPixs = NULL;
+	lastFramePixs = NULL;
+	encodingType = DEPTH_ENCODE_PNG;
 }
 
 ofxKinectPointcloudRecorder::~ofxKinectPointcloudRecorder(){
@@ -18,13 +20,20 @@ ofxKinectPointcloudRecorder::~ofxKinectPointcloudRecorder(){
 	if(pngPixs != NULL){
 		delete pngPixs;
 	}
+	
+	if(lastFramePixs != NULL){
+		delete lastFramePixs;
+	}
 }
 
 void ofxKinectPointcloudRecorder::setup(){
     folderCount = 0;
-    
-    startThread(true, false);
 	currentFrame = 0;
+	
+	lastFramePixs = new unsigned short[640*480];
+	memset(lastFramePixs, 0, sizeof(unsigned short)*640*480);
+
+    startThread(true, false);
 }
 
 void ofxKinectPointcloudRecorder::setRecordLocation(string directory, string filePrefix){
@@ -37,13 +46,23 @@ void ofxKinectPointcloudRecorder::setRecordLocation(string directory, string fil
 	targetFilePrefix = filePrefix;
 }
 
+void ofxKinectPointcloudRecorder::setDepthEncodingType(DepthEncodingType type){
+	encodingType = type;
+}
+
+
 void ofxKinectPointcloudRecorder::addImage(unsigned short* image){
-	unsigned short* addToQueue = new unsigned short[640*480];
-	memcpy(addToQueue, image, 640*480*sizeof(unsigned short));
-    
-	lock();
-	saveQueue.push( addToQueue );
-	unlock();
+	//confirm that it isn't a duplicate of the most recent frame;
+	int framebytes = 640*480*sizeof(unsigned short);
+	if(0 != memcmp(image, lastFramePixs, framebytes)){
+		unsigned short* addToQueue = new unsigned short[640*480];
+		memcpy(addToQueue, image, framebytes);
+		memcpy(lastFramePixs, image, framebytes);
+		
+		lock();
+		saveQueue.push( addToQueue );
+		unlock();
+	}
 }
 
 void ofxKinectPointcloudRecorder::incrementFolder(ofImage posterFrame){
@@ -76,11 +95,16 @@ void ofxKinectPointcloudRecorder::threadedFunction(){
 		if(tosave != NULL){
 			char filenumber[512];
             sprintf(filenumber, "%05d", currentFrame); 
-            
-			string filename = targetDirectory +  "/" + currentFolderPrefix + "/" + targetFilePrefix + "_" + filenumber +  ".xkcd";
-			ofFile file(filename, ofFile::WriteOnly, true);
-			file.write( (char*)&tosave[0], sizeof(unsigned short)*640*480 );					   
-			file.close();
+            if(encodingType == DEPTH_ENCODE_RAW){
+				string filename = targetDirectory +  "/" + currentFolderPrefix + "/" + targetFilePrefix + "_" + filenumber +  ".xkcd";
+				ofFile file(filename, ofFile::WriteOnly, true);
+				file.write( (char*)&tosave[0], sizeof(unsigned short)*640*480 );					   
+				file.close();
+			}
+			else if(encodingType == DEPTH_ENCODE_PNG){
+				string filename = targetDirectory +  "/" + currentFolderPrefix + "/" + targetFilePrefix + "_" + filenumber +  ".png";
+				saveToCompressedPng(filename, tosave);
+			}
 						
 			currentFrame++;
 			delete tosave;			
@@ -92,6 +116,7 @@ void ofxKinectPointcloudRecorder::saveToCompressedPng(string filename, unsigned 
 	if(pngPixs == NULL){
 		pngPixs = new unsigned char[640*480*3];	
 	}
+	
 	for(int i = 0; i < 640*480; i++){
 		pngPixs[i*3+0] = buf[i] >> 8;
 		pngPixs[i*3+1] = buf[i];
@@ -157,6 +182,7 @@ unsigned short* ofxKinectPointcloudRecorder::readCompressedPng(string filename, 
 	if(outbuf == NULL){
 		outbuf = new unsigned short[640*480];
 	}
+	
 //	float startTime = ofGetElapsedTimeMillis();
 	
 	int totalDif = 0;
