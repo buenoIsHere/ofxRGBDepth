@@ -1,12 +1,10 @@
-#version 150
- 
-layout(triangles) in;
-layout(triangle_strip, max_vertices = 3) out;
+#version 120
+#extension GL_EXT_geometry_shader4 : enable
  
 void main() {
-  for(int i = 0; i < gl_in.length(); i++) {
-    gl_Position = gl_in[i].gl_Position;
+  for(int i = 0; i < gl_VerticesIn; ++i) {
+    gl_FrontColor = gl_FrontColorIn[i];
+    gl_Position = gl_PositionIn[i];
     EmitVertex();
   }
-  EndPrimitive();
 }

@@ -42,7 +42,7 @@ class ofxRGBDAlignment {
 	Calibration & getKinectCalibration();
 	Calibration & getExternalCalibration();
 	//populated with vertices, texture coords, and indeces
-	ofMesh & getMesh();
+	ofVboMesh & getMesh();
 	
 	void drawCalibration(bool left);
     

@@ -34,9 +34,10 @@ void ofxRGBDAlignment::setup(int squaresWide, int squaresTall, int squareSize) {
 	colorCalibration.setSquareSize(squareSize);
 
 	//bin -> appname -> category -> apps -> of
-	rgbdShader.setGeometryInputType(GL_POINTS);
-	rgbdShader.setGeometryOutputType(GL_TRIANGLES);
-	rgbdShader.setGeometryOutputCount(1);
+	rgbdShader.setGeometryInputType(GL_TRIANGLES);
+//	rgbdShader.setGeometryInputType(GL_POINTS);
+	rgbdShader.setGeometryOutputType(GL_TRIANGLE_STRIP);
+	rgbdShader.setGeometryOutputCount(3);
 	rgbdShader.load("../../../../../addons/ofxRGBDepth/assets/rgbd.vert",
 					"../../../../../addons/ofxRGBDepth/assets/rgbd.frag",
 					"../../../../../addons/ofxRGBDepth/assets/rgbd.geom");
@@ -47,6 +48,7 @@ void ofxRGBDAlignment::setup(int squaresWide, int squaresTall, int squareSize) {
 	rgbdShader.setUniform1i("externalTexture", 0);
 	
 	mesh.setUsage(GL_STREAM_DRAW);
+	mesh.setMode(OF_PRIMITIVE_TRIANGLES);
 	
 	int w = 640;
 	int h = 240;
@@ -227,7 +229,7 @@ void ofxRGBDAlignment::update(){
 	}
 }
 
-ofMesh& ofxRGBDAlignment::getMesh(){
+ofVboMesh& ofxRGBDAlignment::getMesh(){
 	return mesh;
 }
 
