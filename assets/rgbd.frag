@@ -3,6 +3,7 @@ void main (void)
 {
 
 	gl_FragData[0] = texture2DRect(externalTexture, gl_TexCoord[0].st);
+	//gl_FragData[0] = gl_Color;
 }
 
 //uniform sampler2DRect bumpTex;

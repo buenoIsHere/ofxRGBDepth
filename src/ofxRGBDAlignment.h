@@ -52,7 +52,7 @@ class ofxRGBDAlignment {
     float yshift;
 	float xshift;
 	
-	
+	bool applyShader;
 	ofShader rgbdShader;
 	
   protected:

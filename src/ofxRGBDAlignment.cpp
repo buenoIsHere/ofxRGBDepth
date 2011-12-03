@@ -13,6 +13,7 @@
 ofxRGBDAlignment::ofxRGBDAlignment() {
 	xshift = 9;
 	yshift = 20;
+	applyShader = true;
 }
 
 //-----------------------------------------------
@@ -34,10 +35,9 @@ void ofxRGBDAlignment::setup(int squaresWide, int squaresTall, int squareSize) {
 	colorCalibration.setSquareSize(squareSize);
 
 	//bin -> appname -> category -> apps -> of
-	rgbdShader.setGeometryInputType(GL_TRIANGLES);
-//	rgbdShader.setGeometryInputType(GL_POINTS);
+	rgbdShader.setGeometryInputType(GL_TRIANGLES); 
 	rgbdShader.setGeometryOutputType(GL_TRIANGLE_STRIP);
-	rgbdShader.setGeometryOutputCount(3);
+	rgbdShader.setGeometryOutputCount(6);
 	rgbdShader.load("../../../../../addons/ofxRGBDepth/assets/rgbd.vert",
 					"../../../../../addons/ofxRGBDepth/assets/rgbd.frag",
 					"../../../../../addons/ofxRGBDepth/assets/rgbd.geom");
