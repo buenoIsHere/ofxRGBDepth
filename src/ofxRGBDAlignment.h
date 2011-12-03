@@ -53,6 +53,7 @@ class ofxRGBDAlignment {
 	float xshift;
 	
 	
+	ofShader rgbdShader;
 	
   protected:
 	bool hasDepthImage;
@@ -62,7 +63,7 @@ class ofxRGBDAlignment {
 	ofBaseHasTexture* currentColorImage;
 	unsigned short* currentDepthImage;
 	
-	ofShader renderShader;
+	
 	
 	vector<Point2f> imagePoints;    
 	ofVboMesh mesh;

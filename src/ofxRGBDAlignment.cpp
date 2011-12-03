@@ -11,7 +11,8 @@
 
 
 ofxRGBDAlignment::ofxRGBDAlignment() {
-	xshift = yshift = 0;
+	xshift = 9;
+	yshift = 20;
 }
 
 //-----------------------------------------------
@@ -33,17 +34,27 @@ void ofxRGBDAlignment::setup(int squaresWide, int squaresTall, int squareSize) {
 	colorCalibration.setSquareSize(squareSize);
 
 	//bin -> appname -> category -> apps -> of
-	renderShader.load("../../../../../addons/ofxRGBDepth/assets/renderShader");
+	rgbdShader.setGeometryInputType(GL_POINTS);
+	rgbdShader.setGeometryOutputType(GL_TRIANGLES);
+	rgbdShader.setGeometryOutputCount(1);
+	rgbdShader.load("../../../../../addons/ofxRGBDepth/assets/rgbd.vert",
+					"../../../../../addons/ofxRGBDepth/assets/rgbd.frag",
+					"../../../../../addons/ofxRGBDepth/assets/rgbd.geom");
+//	rgbdShader.load("../../../../../addons/ofxRGBDepth/assets/rgbd.vert",
+//					"../../../../../addons/ofxRGBDepth/assets/rgbd.frag");
+	
+	rgbdShader.begin();
+	rgbdShader.setUniform1i("externalTexture", 0);
 	
 	mesh.setUsage(GL_STREAM_DRAW);
 	
-	for(int i = 0; i < 640*480; i++) {
+	int w = 640;
+	int h = 240;
+	for(int i = 0; i < w*h; i++) {
  		mesh.addVertex(ofVec3f(0,0,0));
 		mesh.addTexCoord(ofVec2f(0,0));
 	}
 	
-	int w = 640;
-	int h = 480;
 	for (int y = 0; y < h-1; y++){
 		for (int x=0; x < w-1; x++){
 			ofIndexType a,b,c;
@@ -58,7 +69,6 @@ void ofxRGBDAlignment::setup(int squaresWide, int squaresTall, int squareSize) {
 			mesh.addTriangle(a, b, c);
 		}
 	}	
-	
 }
 
 //-----------------------------------------------
@@ -163,7 +173,7 @@ void ofxRGBDAlignment::update(unsigned short* depthPixelsRaw){
 
 void ofxRGBDAlignment::update(){
 	int w = 640;
-	int h = 480;
+	int h = 240;
 	
 	int start = ofGetElapsedTimeMillis();
 	
