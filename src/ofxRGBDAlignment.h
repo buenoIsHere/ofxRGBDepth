@@ -52,6 +52,8 @@ class ofxRGBDAlignment {
     float yshift;
 	float xshift;
 	
+	
+	
   protected:
 	bool hasDepthImage;
 	bool hasColorImage;

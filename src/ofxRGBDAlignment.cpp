@@ -36,6 +36,29 @@ void ofxRGBDAlignment::setup(int squaresWide, int squaresTall, int squareSize) {
 	renderShader.load("../../../../../addons/ofxRGBDepth/assets/renderShader");
 	
 	mesh.setUsage(GL_STREAM_DRAW);
+	
+	for(int i = 0; i < 640*480; i++) {
+ 		mesh.addVertex(ofVec3f(0,0,0));
+		mesh.addTexCoord(ofVec2f(0,0));
+	}
+	
+	int w = 640;
+	int h = 480;
+	for (int y = 0; y < h-1; y++){
+		for (int x=0; x < w-1; x++){
+			ofIndexType a,b,c;
+			a = x+y*w;
+			b = (x+1)+y*w;
+			c = x+(y+1)*w;
+			mesh.addTriangle(a, b, c);
+			
+			a = (x+1)+y*w;
+			b = x+(y+1)*w;
+			c = (x+1)+(y+1)*w;
+			mesh.addTriangle(a, b, c);
+		}
+	}	
+	
 }
 
 //-----------------------------------------------
@@ -142,6 +165,8 @@ void ofxRGBDAlignment::update(){
 	int w = 640;
 	int h = 480;
 	
+	int start = ofGetElapsedTimeMillis();
+	
 	Point2d fov = depthCalibration.getUndistortedIntrinsics().getFov();
 	float fx = tanf(ofDegToRad(fov.x) / 2) * 2;
 	float fy = tanf(ofDegToRad(fov.y) / 2) * 2;
@@ -155,24 +180,21 @@ void ofxRGBDAlignment::update(){
 	for(int y = 0; y < h; y++) {
 		for(int x = 0; x < w; x++) {
 
-			//float pixel = rawToCentimeters( currentDepthImage[y*w+j] );
             unsigned short z = currentDepthImage[y*w+x];
             float xReal = (((float) x - principalPoint.x) / imageSize.width) * z * fx + xshift;
             float yReal = (((float) y - principalPoint.y) / imageSize.height) * z * fy + yshift;
-            // add each point into pointCloud
-            //pointCloud.push_back(Point3f(xReal, yReal, z));
-			ofVec3f vert = ofVec3f(xReal, yReal, z);
-			if(mesh.getVertices().size() > index){
-				mesh.setVertex(index, vert);
-			}
-			else{
-				mesh.addVertex(vert);
-			}
+			mesh.setVertex(index, ofVec3f(xReal, yReal, z));
 			index++;
 		}
 	}
 	
+	//cout << "unproject points " << (ofGetElapsedTimeMillis() - start) << endl;
+	start = ofGetElapsedTimeMillis();
+	
 	Mat pcMat = Mat(toCv(mesh));
+
+	//cout << "create mesh " << (ofGetElapsedTimeMillis() - start) << endl;
+	start = ofGetElapsedTimeMillis();
 	
 	//cout << "PC " << pcMat << endl;
 	//	cout << "Rot Depth->Color " << rotationDepthToColor << endl;
@@ -187,51 +209,12 @@ void ofxRGBDAlignment::update(){
 				  colorCalibration.getDistCoeffs(),
 				  imagePoints);
 	
-	index = 0;	
+	//cout << "project points " << (ofGetElapsedTimeMillis() - start ) << endl;
+	
 	for(int i = 0; i < imagePoints.size(); i++) {
 		ofVec2f textureCoord = ofVec2f(imagePoints[i].x, imagePoints[i].y);
-		if(mesh.getTexCoords().size() > index){
-			mesh.setTexCoord(i, textureCoord);
-		}
-		else{
-			mesh.addTexCoord(textureCoord);
-		}
-		index++;
+		mesh.setTexCoord(i, textureCoord);
 	}
-    
-	int facesAdded = 0;
-	int indecesAdded = 0;	
-	for (int y = 0; y < h-1; y++){
-		for (int x=0; x < w-1; x++){
-			ofIndexType a,b,c;
-			a = x+y*w;
-			b = (x+1)+y*w;
-			c = x+(y+1)*w;
-			if(mesh.getIndices().size() > indecesAdded){
-				mesh.setIndex(indecesAdded++, a);		// 0
-				mesh.setIndex(indecesAdded++, b);		// 1
-				mesh.setIndex(indecesAdded++, c);		// 10									
-			}
-			else{
-				mesh.addTriangle(a, b, c);
-				indecesAdded+=3;
-			}
-			facesAdded++;
-			
-			a = (x+1)+y*w;
-			b = x+(y+1)*w;
-			c = (x+1)+(y+1)*w;
-			if(mesh.getIndices().size() > indecesAdded){
-				mesh.setIndex(indecesAdded++, a);		// 0
-				mesh.setIndex(indecesAdded++, b);		// 1
-				mesh.setIndex(indecesAdded++, c);		// 10									
-			}
-			else{
-				mesh.addTriangle(a, b, c);
-				indecesAdded+=3;
-			}
-		}
-	}	
 }
 
 ofMesh& ofxRGBDAlignment::getMesh(){
