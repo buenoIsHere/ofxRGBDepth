@@ -30,6 +30,8 @@ class ofxKinectPointcloudRecorder : ofThread {
     
 	void saveToCompressedPng(string filename, unsigned short* buf);
 	
+	int numFramesWaitingSave();
+	
 	//DECODE
 	unsigned short* readDepthFrame(string filename, unsigned short* outbuf = NULL);
 	unsigned short* readDepthFrame(ofFile file, unsigned short*  outbuf = NULL);
@@ -41,7 +43,8 @@ class ofxKinectPointcloudRecorder : ofThread {
 	
   protected:
 	DepthEncodingType encodingType;
-	
+	ofImage compressedDepthImage;
+
 	unsigned short* lastFramePixs;
 	void threadedFunction();
 	int folderCount;

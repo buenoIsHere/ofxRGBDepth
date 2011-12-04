@@ -65,6 +65,10 @@ void ofxKinectPointcloudRecorder::addImage(unsigned short* image){
 	}
 }
 
+int ofxKinectPointcloudRecorder::numFramesWaitingSave(){
+	return saveQueue.size();
+}
+
 void ofxKinectPointcloudRecorder::incrementFolder(ofImage posterFrame){
     currentFolderPrefix = "TAKE_" + ofToString(ofGetDay()) + "_" + ofToString(ofGetHours()) + "_" + ofToString(ofGetMinutes()) + "_" + ofToString(ofGetSeconds());
     ofDirectory dir(targetDirectory + "/" + currentFolderPrefix);
@@ -88,7 +92,6 @@ void ofxKinectPointcloudRecorder::threadedFunction(){
 		if(saveQueue.size() != 0){
 			tosave = saveQueue.front();
 			saveQueue.pop();
-			cout << " currently " << saveQueue.size() << " waiting " << endl;
 		}
 		unlock();
 		
@@ -122,7 +125,7 @@ void ofxKinectPointcloudRecorder::saveToCompressedPng(string filename, unsigned 
 		pngPixs[i*3+1] = buf[i];
 		pngPixs[i*3+2] = 0;
 	}
-	ofImage compressedDepthImage;
+	compressedDepthImage.setUseTexture(false);
 	compressedDepthImage.setFromPixels(pngPixs, 640,480, OF_IMAGE_COLOR);
 	if(ofFilePath::getFileExt(filename) != "png"){
 		ofLogError("ofxKinectPointcloudRecorder -- file is not being saved as png: " + filename);
