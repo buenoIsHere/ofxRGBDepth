@@ -1,5 +1,5 @@
 /*
- *  ofxKinectPointcloudRecorder.cpp
+ *  ofxDepthImageRecorder.cpp
  *  PointcloudWriter
  *
  *  Created by Jim on 10/20/11.
@@ -7,15 +7,15 @@
  *
  */
 
-#include "ofxKinectPointcloudRecorder.h"
+#include "ofxDepthImageRecorder.h"
 
-ofxKinectPointcloudRecorder::ofxKinectPointcloudRecorder(){
+ofxDepthImageRecorder::ofxDepthImageRecorder(){
 	pngPixs = NULL;
 	lastFramePixs = NULL;
 	encodingType = DEPTH_ENCODE_PNG;
 }
 
-ofxKinectPointcloudRecorder::~ofxKinectPointcloudRecorder(){
+ofxDepthImageRecorder::~ofxDepthImageRecorder(){
 	stopThread(true);
 	if(pngPixs != NULL){
 		delete pngPixs;
@@ -26,7 +26,7 @@ ofxKinectPointcloudRecorder::~ofxKinectPointcloudRecorder(){
 	}
 }
 
-void ofxKinectPointcloudRecorder::setup(){
+void ofxDepthImageRecorder::setup(){
     folderCount = 0;
 	currentFrame = 0;
 	
@@ -36,7 +36,7 @@ void ofxKinectPointcloudRecorder::setup(){
     startThread(true, false);
 }
 
-void ofxKinectPointcloudRecorder::setRecordLocation(string directory, string filePrefix){
+void ofxDepthImageRecorder::setRecordLocation(string directory, string filePrefix){
 	targetDirectory = directory;
 	ofDirectory dir(directory);
 	if(!dir.exists()){
@@ -46,12 +46,12 @@ void ofxKinectPointcloudRecorder::setRecordLocation(string directory, string fil
 	targetFilePrefix = filePrefix;
 }
 
-void ofxKinectPointcloudRecorder::setDepthEncodingType(DepthEncodingType type){
+void ofxDepthImageRecorder::setDepthEncodingType(DepthEncodingType type){
 	encodingType = type;
 }
 
 
-void ofxKinectPointcloudRecorder::addImage(unsigned short* image){
+void ofxDepthImageRecorder::addImage(unsigned short* image){
 	//confirm that it isn't a duplicate of the most recent frame;
 	int framebytes = 640*480*sizeof(unsigned short);
 	if(0 != memcmp(image, lastFramePixs, framebytes)){
@@ -65,11 +65,11 @@ void ofxKinectPointcloudRecorder::addImage(unsigned short* image){
 	}
 }
 
-int ofxKinectPointcloudRecorder::numFramesWaitingSave(){
+int ofxDepthImageRecorder::numFramesWaitingSave(){
 	return saveQueue.size();
 }
 
-void ofxKinectPointcloudRecorder::incrementFolder(ofImage posterFrame){
+void ofxDepthImageRecorder::incrementFolder(ofImage posterFrame){
     currentFolderPrefix = "TAKE_" + ofToString(ofGetDay()) + "_" + ofToString(ofGetHours()) + "_" + ofToString(ofGetMinutes()) + "_" + ofToString(ofGetSeconds());
     ofDirectory dir(targetDirectory + "/" + currentFolderPrefix);
     
@@ -84,7 +84,7 @@ void ofxKinectPointcloudRecorder::incrementFolder(ofImage posterFrame){
     currentFrame = 0;
 }
 
-void ofxKinectPointcloudRecorder::threadedFunction(){
+void ofxDepthImageRecorder::threadedFunction(){
 
 	while(isThreadRunning()){
 		unsigned short* tosave = NULL;
@@ -115,7 +115,7 @@ void ofxKinectPointcloudRecorder::threadedFunction(){
 	}
 }
 
-void ofxKinectPointcloudRecorder::saveToCompressedPng(string filename, unsigned short* buf){
+void ofxDepthImageRecorder::saveToCompressedPng(string filename, unsigned short* buf){
 	if(pngPixs == NULL){
 		pngPixs = new unsigned char[640*480*3];	
 	}
@@ -128,20 +128,20 @@ void ofxKinectPointcloudRecorder::saveToCompressedPng(string filename, unsigned 
 	compressedDepthImage.setUseTexture(false);
 	compressedDepthImage.setFromPixels(pngPixs, 640,480, OF_IMAGE_COLOR);
 	if(ofFilePath::getFileExt(filename) != "png"){
-		ofLogError("ofxKinectPointcloudRecorder -- file is not being saved as png: " + filename);
+		ofLogError("ofxDepthImageRecorder -- file is not being saved as png: " + filename);
 	}
 	compressedDepthImage.saveImage(filename);
 	
 }
 
 
-unsigned short* ofxKinectPointcloudRecorder::readDepthFrame(string filename, unsigned short* outbuf) {
+unsigned short* ofxDepthImageRecorder::readDepthFrame(string filename, unsigned short* outbuf) {
 	int amnt;
 	ofFile infile(filename, ofFile::ReadOnly, true);
 	return readDepthFrame(infile, outbuf);
 }
 
-unsigned short* ofxKinectPointcloudRecorder::readDepthFrame(ofFile infile,  unsigned short* outbuf){
+unsigned short* ofxDepthImageRecorder::readDepthFrame(ofFile infile,  unsigned short* outbuf){
     if(outbuf == NULL){
         outbuf = new unsigned short[640*480];
     }
@@ -152,7 +152,7 @@ unsigned short* ofxKinectPointcloudRecorder::readDepthFrame(ofFile infile,  unsi
 	return outbuf;
 }
 
-ofImage ofxKinectPointcloudRecorder::readDepthFrametoImage(string filename){	
+ofImage ofxDepthImageRecorder::readDepthFrametoImage(string filename){	
 
 	unsigned short* depthFrame = readDepthFrame(filename);
 	ofImage outputImage = convertTo8BitImage(depthFrame);
@@ -161,7 +161,7 @@ ofImage ofxKinectPointcloudRecorder::readDepthFrametoImage(string filename){
 	return outputImage;
 }
 
-ofImage ofxKinectPointcloudRecorder::convertTo8BitImage(unsigned short* buf){
+ofImage ofxDepthImageRecorder::convertTo8BitImage(unsigned short* buf){
 	int nearPlane = 500;
 	int farPlane = 4000;
 	ofImage outputImage;
@@ -181,7 +181,7 @@ ofImage ofxKinectPointcloudRecorder::convertTo8BitImage(unsigned short* buf){
 }
 
 
-unsigned short* ofxKinectPointcloudRecorder::readCompressedPng(string filename, unsigned short* outbuf){
+unsigned short* ofxDepthImageRecorder::readCompressedPng(string filename, unsigned short* outbuf){
 	if(outbuf == NULL){
 		outbuf = new unsigned short[640*480];
 	}
@@ -191,7 +191,7 @@ unsigned short* ofxKinectPointcloudRecorder::readCompressedPng(string filename, 
 	int totalDif = 0;
 	ofImage compressedImage;
 	if(!compressedImage.loadImage(filename)){
-		ofLogError("ofxKinectPointcloudRecorder -- Couldn't read compressed frame " + filename);
+		ofLogError("ofxDepthImageRecorder -- Couldn't read compressed frame " + filename);
 		return outbuf;
 	}
 	

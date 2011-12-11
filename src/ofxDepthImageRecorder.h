@@ -15,10 +15,10 @@ enum DepthEncodingType{
 	DEPTH_ENCODE_PNG
 };
 
-class ofxKinectPointcloudRecorder : ofThread {
+class ofxDepthImageRecorder : ofThread {
   public:
-	ofxKinectPointcloudRecorder();
-	~ofxKinectPointcloudRecorder();
+	ofxDepthImageRecorder();
+	~ofxDepthImageRecorder();
 	
 	void setDepthEncodingType(DepthEncodingType type);
 	
@@ -39,7 +39,6 @@ class ofxKinectPointcloudRecorder : ofThread {
 	
 	ofImage readDepthFrametoImage(string filename);
 	ofImage convertTo8BitImage(unsigned short* buf);
-	
 	
   protected:
 	DepthEncodingType encodingType;
