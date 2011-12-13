@@ -15,6 +15,14 @@ enum DepthEncodingType{
 	DEPTH_ENCODE_PNG
 };
 
+typedef struct QueuedFrame {
+	unsigned short* pixels;
+	string directory;
+	string filename;
+	int timestamp;
+	DepthEncodingType encodingType;
+};
+
 class ofxDepthImageRecorder : ofThread {
   public:
 	ofxDepthImageRecorder();
@@ -26,7 +34,8 @@ class ofxDepthImageRecorder : ofThread {
 	void setup();
 	void setRecordLocation(string directory, string filePrefix);
 	void addImage(unsigned short* image);
-	void incrementFolder(ofImage posterFrame);
+	void incrementFolder();
+	void incrementFolder(ofImage posterFrame); //providing a poster frame saves it in the same directory
     
 	void saveToCompressedPng(string filename, unsigned short* buf);
 	
@@ -40,6 +49,8 @@ class ofxDepthImageRecorder : ofThread {
 	ofImage readDepthFrametoImage(string filename);
 	ofImage convertTo8BitImage(unsigned short* buf);
 	
+	int recordingStartTime; //in millis should make this more accurate
+	
   protected:
 	DepthEncodingType encodingType;
 	ofImage compressedDepthImage;
@@ -51,7 +62,8 @@ class ofxDepthImageRecorder : ofThread {
 	string targetDirectory;
 	string targetFilePrefix;
 	int currentFrame;
-	queue<unsigned short*> saveQueue;
+	//queue<unsigned short*> saveQueue;
+	queue<QueuedFrame> saveQueue;
 	unsigned char* pngPixs;
 	bool isRecording;
 };

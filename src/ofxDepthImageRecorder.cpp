@@ -55,13 +55,29 @@ void ofxDepthImageRecorder::addImage(unsigned short* image){
 	//confirm that it isn't a duplicate of the most recent frame;
 	int framebytes = 640*480*sizeof(unsigned short);
 	if(0 != memcmp(image, lastFramePixs, framebytes)){
+		QueuedFrame frame;
+		frame.timestamp = ofGetElapsedTimeMillis() - recordingStartTime;
+		frame.directory = targetDirectory +  "/" + currentFolderPrefix + "/";
 		unsigned short* addToQueue = new unsigned short[640*480];
 		memcpy(addToQueue, image, framebytes);
 		memcpy(lastFramePixs, image, framebytes);
+		frame.pixels = addToQueue;
+		frame.encodingType = encodingType;
 		
+		char filenumber[512];
+		sprintf(filenumber, "%05d", currentFrame); 
+
+		if(encodingType == DEPTH_ENCODE_RAW){
+			frame.filename = targetFilePrefix + "_" + filenumber +  "_millis_" + ofToString(frame.timestamp) + ".xkcd";
+		}
+		else if(encodingType == DEPTH_ENCODE_PNG){
+			frame.filename = targetFilePrefix + "_" + filenumber +  "_millis_" + ofToString(frame.timestamp) + ".png";
+		}
+				
 		lock();
-		saveQueue.push( addToQueue );
+		saveQueue.push( frame );
 		unlock();
+		currentFrame++;
 	}
 }
 
@@ -69,48 +85,49 @@ int ofxDepthImageRecorder::numFramesWaitingSave(){
 	return saveQueue.size();
 }
 
-void ofxDepthImageRecorder::incrementFolder(ofImage posterFrame){
+void ofxDepthImageRecorder::incrementFolder(){
     currentFolderPrefix = "TAKE_" + ofToString(ofGetDay()) + "_" + ofToString(ofGetHours()) + "_" + ofToString(ofGetMinutes()) + "_" + ofToString(ofGetSeconds());
     ofDirectory dir(targetDirectory + "/" + currentFolderPrefix);
     
 	if(!dir.exists()){
 		dir.create(true);
 	}
-    try{
-        posterFrame.saveImage(targetDirectory+"/"+currentFolderPrefix+"/_poster.png");
-    }catch(...){
-        
-    }
-    currentFrame = 0;
+    currentFrame = 0;	
+	recordingStartTime = ofGetElapsedTimeMillis();
+}
+											  
+void ofxDepthImageRecorder::incrementFolder(ofImage posterFrame){
+	incrementFolder();
+	posterFrame.saveImage(targetDirectory+"/"+currentFolderPrefix+"/_poster.png");
 }
 
 void ofxDepthImageRecorder::threadedFunction(){
 
 	while(isThreadRunning()){
-		unsigned short* tosave = NULL;
+		//unsigned short* tosave = NULL;
+		QueuedFrame frame;
+		bool foundFrame = false;
 		lock();
 		if(saveQueue.size() != 0){
-			tosave = saveQueue.front();
+			frame = saveQueue.front();
 			saveQueue.pop();
+			foundFrame = true;
 		}
 		unlock();
 		
-		if(tosave != NULL){
-			char filenumber[512];
-            sprintf(filenumber, "%05d", currentFrame); 
-            if(encodingType == DEPTH_ENCODE_RAW){
-				string filename = targetDirectory +  "/" + currentFolderPrefix + "/" + targetFilePrefix + "_" + filenumber +  ".xkcd";
-				ofFile file(filename, ofFile::WriteOnly, true);
-				file.write( (char*)&tosave[0], sizeof(unsigned short)*640*480 );					   
+		if(foundFrame){
+            if(frame.encodingType == DEPTH_ENCODE_RAW){
+				//string filename = targetDirectory +  "/" + currentFolderPrefix + "/" + targetFilePrefix + "_" + filenumber +  ".xkcd";
+				ofFile file(frame.directory + frame.filename, ofFile::WriteOnly, true);
+				file.write( (char*)&frame.pixels[0], sizeof(unsigned short)*640*480 );					   
 				file.close();
 			}
 			else if(encodingType == DEPTH_ENCODE_PNG){
-				string filename = targetDirectory +  "/" + currentFolderPrefix + "/" + targetFilePrefix + "_" + filenumber +  ".png";
-				saveToCompressedPng(filename, tosave);
+				saveToCompressedPng(frame.directory+frame.filename, frame.pixels);
 			}
 						
-			currentFrame++;
-			delete tosave;			
+
+			delete frame.pixels;			
 		}
 	}
 }
