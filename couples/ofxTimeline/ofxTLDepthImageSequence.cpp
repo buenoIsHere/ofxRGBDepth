@@ -16,6 +16,7 @@ ofxTLDepthImageSequence::ofxTLDepthImageSequence(){
 	thumbnailDepthRaw = NULL;
 	selectedFrame = 0;
 	thumbsEnabled = true;
+	framesHaveTimestamps = false;
 }
 
 ofxTLDepthImageSequence::~ofxTLDepthImageSequence(){
@@ -37,7 +38,14 @@ void ofxTLDepthImageSequence::setup(){
 }
 
 void ofxTLDepthImageSequence::update(ofEventArgs& args){
-	selectFrame( timeline->getCurrentFrame() );
+	//if we are on a timebased timeline and our frames have timestamps
+	//prefer selecting based on the time as we'll get more accurate playback speeds
+	if(!timeline->getIsFrameBased() && framesHaveTimestamps){ 
+		selectTime( timeline->getCurrentTime() );
+	}
+	else{
+		selectFrame( timeline->getCurrentFrame() );
+	}
 }
 
 void ofxTLDepthImageSequence::draw(){
@@ -135,6 +143,15 @@ void ofxTLDepthImageSequence::selectFrame(int frame){
 	currentDepthImage = decoder.convertTo8BitImage(currentDepthRaw);
 }
 
+void ofxTLDepthImageSequence::selectTime(float timeInSeconds){
+	for(int i = 1; i < videoThumbs.size(); i++){
+		if(videoThumbs[i].timestamp/1000.0 < timeInSeconds){
+			selectFrame(i-1);
+		}
+	}
+}
+
+
 void ofxTLDepthImageSequence::mouseReleased(ofMouseEventArgs& args){
 }
 
@@ -165,16 +182,38 @@ void ofxTLDepthImageSequence::loadSequence(string seqdir){
 		}
 	}
 	
+	if(sequenceLoaded){
+		videoThumbs.clear();
+		sequenceLoaded = false;
+	}
+	
 	sequenceList.allowExt("png");
 	int numFiles = sequenceList.listDir();
+	bool checkedForTimestamp = false;
 	for(int i = 0; i < numFiles; i++){
-		if(sequenceList.getPath(i).find("poster") != string::npos){
+		if(sequenceList.getName(i).find("poster") != string::npos){
 			cout << "discarding poster frame " << sequenceList.getPath(i) << endl;
 			continue;
 		}
+		
+		if(!checkedForTimestamp){
+			framesHaveTimestamps = sequenceList.getName(i).find("millis") != string::npos;
+			checkedForTimestamp = true;
+			cout << "Frames have timestamps?? " << (framesHaveTimestamps ? "yes!" : "no :(") << endl;
+		}
+		
 		ofxTLVideoThumb	t;
 		t.setup(i, thumbDirectory);
 		t.sourcepath = sequenceList.getPath(i);
+		
+		if(framesHaveTimestamps){
+			vector<string> split = ofSplitString(sequenceList.getName(i), "_", true, true);
+			for(int i = 0; i < split.size(); i++){
+				if(split[i] == "millis"){
+					t.timestamp = ofToInt(split[i+1]);
+				}
+			}
+		}
 		
 		videoThumbs.push_back(t);
 	}
@@ -182,6 +221,7 @@ void ofxTLDepthImageSequence::loadSequence(string seqdir){
 	sequenceLoaded = true;
 	
 	videoThumbs[0].visible = true;
+	
 	generateThumbnailForFrame(0);
 	calculateFramePositions();
 	generateVideoThumbnails();
@@ -200,7 +240,7 @@ void ofxTLDepthImageSequence::calculateFramePositions(){
 	int frameStep = MAX(videoThumbs.size() / framesToShow, 1); 
 	int minPixelIndex = -(zoomBounds.min * totalPixels);
 	
-	cout << "bounds are " << bounds.width << " " << bounds.height << " frameWidth " << frameWidth << " total pixels " << totalPixels << " frame step " << frameStep << " minpix " << minPixelIndex << endl;
+	//cout << "bounds are " << bounds.width << " " << bounds.height << " frameWidth " << frameWidth << " total pixels " << totalPixels << " frame step " << frameStep << " minpix " << minPixelIndex << endl;
 	
 	for(int i = 0; i < videoThumbs.size(); i++){
 		if(i % frameStep == 0){
@@ -223,7 +263,6 @@ void ofxTLDepthImageSequence::generateVideoThumbnails() {
 void ofxTLDepthImageSequence::generateThumbnailForFrame(int i){
 	if(videoThumbs[i].visible && !videoThumbs[i].loaded){
 		if(videoThumbs[i].exists){
-//			cout << "Loading existing thumb " << i << endl;
 			videoThumbs[i].load();
 		}
 		else {
@@ -234,10 +273,15 @@ void ofxTLDepthImageSequence::generateThumbnailForFrame(int i){
 	}
 }
 
+
 void ofxTLDepthImageSequence::toggleThumbs(){
 	thumbsEnabled = !thumbsEnabled;
 }
 
 int ofxTLDepthImageSequence::getSelectedFrame(){
 	return selectedFrame;
+}
+
+bool ofxTLDepthImageSequence::doFramesHaveTimestamps(){
+	return framesHaveTimestamps;
 }

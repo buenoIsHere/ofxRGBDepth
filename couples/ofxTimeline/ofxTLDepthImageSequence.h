@@ -14,7 +14,6 @@
 #include "ofxTLVideoThumb.h"
 #include "ofxDepthImageRecorder.h"
 
-
 class ofxTLDepthImageSequence : public ofxTLElement {
   public:	
 	ofxTLDepthImageSequence();
@@ -38,7 +37,6 @@ class ofxTLDepthImageSequence : public ofxTLElement {
 
 	virtual void drawRectChanged();
 
-		
 	void loadSequence();
 	void loadSequence(string sequenceDirectory);
 
@@ -52,9 +50,13 @@ class ofxTLDepthImageSequence : public ofxTLElement {
 	
 	int getSelectedFrame();
 	void selectFrame(int frame);
+	void selectTime(float timeInSeconds);
 	void toggleThumbs();
 	
+	bool doFramesHaveTimestamps();
+	
   protected:
+	bool framesHaveTimestamps;
 	
 	//only called during playback
 	void update(ofEventArgs& args);
