@@ -50,35 +50,72 @@ void ofxDepthImageRecorder::setDepthEncodingType(DepthEncodingType type){
 	encodingType = type;
 }
 
+vector<string> ofxDepthImageRecorder::getTakePaths(){
+	ofDirectory dir = ofDirectory(targetDirectory);
+	dir.listDir();
+	vector<string> paths;
+	for(int i = 0; i < dir.numFiles(); i++){
+		paths.push_back(dir.getPath(i));
+	}
+	return paths;
+}
 
-void ofxDepthImageRecorder::addImage(unsigned short* image){
+
+bool ofxDepthImageRecorder::addImage(unsigned short* image, unsigned char* auxImage){
+	if(addImage(image)){
+		char filenumber[512];
+		sprintf(filenumber, "%05d", currentFrame); 
+
+		QueuedFrame frame;
+		frame.timestamp = ofGetElapsedTimeMillis() - recordingStartTime;
+		frame.directory = targetDirectory +  "/" + currentFolderPrefix + "_aux/";
+		frame.filename = targetFilePrefix + "_" + filenumber + ".png";
+		frame.encodingType = DEPTH_ENCODE_NONE;
+		frame.pixels = new unsigned char[640*480];
+		memcpy(frame.pixels, auxImage, 640*480);
+		
+		lock();
+		saveQueue.push( frame );
+		unlock();
+		
+
+		return true;
+	}
+	return false;
+}
+
+bool ofxDepthImageRecorder::addImage(unsigned short* image){
 	//confirm that it isn't a duplicate of the most recent frame;
 	int framebytes = 640*480*sizeof(unsigned short);
 	if(0 != memcmp(image, lastFramePixs, framebytes)){
 		QueuedFrame frame;
 		frame.timestamp = ofGetElapsedTimeMillis() - recordingStartTime;
 		frame.directory = targetDirectory +  "/" + currentFolderPrefix + "/";
-		unsigned short* addToQueue = new unsigned short[640*480];
-		memcpy(addToQueue, image, framebytes);
+		frame.pixels = new unsigned short[640*480];
+		memcpy(frame.pixels, image, framebytes);
 		memcpy(lastFramePixs, image, framebytes);
-		frame.pixels = addToQueue;
 		frame.encodingType = encodingType;
 		
 		char filenumber[512];
 		sprintf(filenumber, "%05d", currentFrame); 
-
+		
+		char millisstring[512];
+		sprintf(millisstring, "%010d", frame.timestamp);
 		if(encodingType == DEPTH_ENCODE_RAW){
-			frame.filename = targetFilePrefix + "_" + filenumber +  "_millis_" + ofToString(frame.timestamp) + ".xkcd";
+			frame.filename = targetFilePrefix + "_" + filenumber +  "_millis_" + millisstring + ".xkcd";
 		}
 		else if(encodingType == DEPTH_ENCODE_PNG){
-			frame.filename = targetFilePrefix + "_" + filenumber +  "_millis_" + ofToString(frame.timestamp) + ".png";
+			frame.filename = targetFilePrefix + "_" + filenumber +  "_millis_" + millisstring + ".png";
 		}
 				
 		lock();
 		saveQueue.push( frame );
 		unlock();
+		
 		currentFrame++;
+		return true;
 	}
+	return false;
 }
 
 int ofxDepthImageRecorder::numFramesWaitingSave(){
@@ -86,12 +123,18 @@ int ofxDepthImageRecorder::numFramesWaitingSave(){
 }
 
 void ofxDepthImageRecorder::incrementFolder(){
-    currentFolderPrefix = "TAKE_" + ofToString(ofGetDay()) + "_" + ofToString(ofGetHours()) + "_" + ofToString(ofGetMinutes()) + "_" + ofToString(ofGetSeconds());
+    currentFolderPrefix = "TAKE_" + ofToString(ofGetMonth()) + "_" + ofToString(ofGetDay()) + "_" + ofToString(ofGetHours()) + "_" + ofToString(ofGetMinutes()) + "_" + ofToString(ofGetSeconds());
     ofDirectory dir(targetDirectory + "/" + currentFolderPrefix);
     
 	if(!dir.exists()){
 		dir.create(true);
 	}
+	
+//	ofDirectory aux(targetDirectory + "/" + currentFolderPrefix + "_aux");
+//	if(!aux.exists()){
+//		aux.create(true);
+//	}
+	
     currentFrame = 0;	
 	recordingStartTime = ofGetElapsedTimeMillis();
 }
@@ -119,15 +162,23 @@ void ofxDepthImageRecorder::threadedFunction(){
             if(frame.encodingType == DEPTH_ENCODE_RAW){
 				//string filename = targetDirectory +  "/" + currentFolderPrefix + "/" + targetFilePrefix + "_" + filenumber +  ".xkcd";
 				ofFile file(frame.directory + frame.filename, ofFile::WriteOnly, true);
-				file.write( (char*)&frame.pixels[0], sizeof(unsigned short)*640*480 );					   
+				file.write( (char*)&((unsigned short*)frame.pixels)[0], sizeof(unsigned short)*640*480 );					   
 				file.close();
+				delete (unsigned short*)frame.pixels;
 			}
 			else if(encodingType == DEPTH_ENCODE_PNG){
-				saveToCompressedPng(frame.directory+frame.filename, frame.pixels);
+				int startTime = ofGetElapsedTimeMillis();
+				saveToCompressedPng(frame.directory+frame.filename, (unsigned short*)frame.pixels);
+				delete (unsigned short*)frame.pixels;
+				cout << "compression took " << ofGetElapsedTimeMillis() - startTime << " Millis " << endl;
 			}
-						
-
-			delete frame.pixels;			
+			else if(encodingType == DEPTH_ENCODE_NONE){
+				ofImage pix;
+				pix.setUseTexture(false);
+				pix.setFromPixels((unsigned char*)frame.pixels, 640, 480, OF_IMAGE_GRAYSCALE);
+				pix.saveImage(frame.directory+frame.filename);
+				delete (unsigned char*)frame.pixels;			
+			}
 		}
 	}
 }

@@ -38,8 +38,13 @@ class ofxTLDepthImageSequence : public ofxTLElement {
 
 	virtual void drawRectChanged();
 
+		
 	void loadSequence();
 	void loadSequence(string sequenceDirectory);
+
+	void playbackStarted(ofxTLPlaybackEventArgs& args);
+	void playbackEnded(ofxTLPlaybackEventArgs& args);
+	void playbackLooped(ofxTLPlaybackEventArgs& args);
 	
 	ofImage currentDepthImage;
 	unsigned short* currentDepthRaw;
@@ -50,6 +55,9 @@ class ofxTLDepthImageSequence : public ofxTLElement {
 	void toggleThumbs();
 	
   protected:
+	
+	//only called during playback
+	void update(ofEventArgs& args);
 	
 	int selectedFrame;
 	bool sequenceLoaded;

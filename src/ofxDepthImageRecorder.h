@@ -11,12 +11,13 @@
 #include "ofMain.h"
 
 enum DepthEncodingType{
+	DEPTH_ENCODE_NONE,
 	DEPTH_ENCODE_RAW,
 	DEPTH_ENCODE_PNG
 };
 
 typedef struct QueuedFrame {
-	unsigned short* pixels;
+	void* pixels;
 	string directory;
 	string filename;
 	int timestamp;
@@ -29,16 +30,19 @@ class ofxDepthImageRecorder : ofThread {
 	~ofxDepthImageRecorder();
 	
 	void setDepthEncodingType(DepthEncodingType type);
+	vector<string> getTakePaths();
 	
 	//ENCODE
 	void setup();
 	void setRecordLocation(string directory, string filePrefix);
-	void addImage(unsigned short* image);
+	bool addImage(unsigned short* image);
+	bool addImage(unsigned short* image, unsigned char* auxImage);
+	
 	void incrementFolder();
 	void incrementFolder(ofImage posterFrame); //providing a poster frame saves it in the same directory
     
 	void saveToCompressedPng(string filename, unsigned short* buf);
-	
+
 	int numFramesWaitingSave();
 	
 	//DECODE

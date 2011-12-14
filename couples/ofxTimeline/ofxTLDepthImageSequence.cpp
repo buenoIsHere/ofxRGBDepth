@@ -8,6 +8,7 @@
  */
 
 #include "ofxTLDepthImageSequence.h"
+#include "ofxTimeline.h"
 
 ofxTLDepthImageSequence::ofxTLDepthImageSequence(){
 	sequenceLoaded = false;
@@ -29,8 +30,14 @@ ofxTLDepthImageSequence::~ofxTLDepthImageSequence(){
 void ofxTLDepthImageSequence::setup(){
 	
 	enable();
+	ofxTLRegisterPlaybackEvents(this);
 	currentDepthRaw = new unsigned short[640*480];
 	thumbnailDepthRaw = new unsigned short[640*480];
+	currentDepthImage = decoder.convertTo8BitImage(currentDepthRaw);
+}
+
+void ofxTLDepthImageSequence::update(ofEventArgs& args){
+	selectFrame( timeline->getCurrentFrame() );
 }
 
 void ofxTLDepthImageSequence::draw(){
@@ -109,6 +116,17 @@ void ofxTLDepthImageSequence::keyPressed(ofKeyEventArgs& args){
 			selectFrame(MIN(selectedFrame+1, videoThumbs.size()-1));		
 		}
 	}
+}
+
+void ofxTLDepthImageSequence::playbackStarted(ofxTLPlaybackEventArgs& args){
+	ofAddListener(ofEvents.update, this, &ofxTLDepthImageSequence::update);
+}
+
+void ofxTLDepthImageSequence::playbackEnded(ofxTLPlaybackEventArgs& args){
+	ofRemoveListener(ofEvents.update, this, &ofxTLDepthImageSequence::update);
+
+}
+void ofxTLDepthImageSequence::playbackLooped(ofxTLPlaybackEventArgs& args){
 }
 
 void ofxTLDepthImageSequence::selectFrame(int frame){
