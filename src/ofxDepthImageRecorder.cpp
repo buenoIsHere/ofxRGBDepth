@@ -53,6 +53,7 @@ void ofxDepthImageRecorder::setDepthEncodingType(DepthEncodingType type){
 vector<string> ofxDepthImageRecorder::getTakePaths(){
 	ofDirectory dir = ofDirectory(targetDirectory);
 	dir.listDir();
+	dir.sort();
 	vector<string> paths;
 	for(int i = 0; i < dir.numFiles(); i++){
 		paths.push_back(dir.getPath(i));

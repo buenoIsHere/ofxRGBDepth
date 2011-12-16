@@ -50,6 +50,10 @@ void ofxCvCheckerboardPreview::draw(){
 	draw(ofRectangle(0,0,testImage.getWidth(), testImage.getHeight()) );
 }
 
+void ofxCvCheckerboardPreview::draw(float x, float y){
+	draw(ofRectangle(x,y,testImage.getWidth(), testImage.getHeight() ));
+}
+
 void ofxCvCheckerboardPreview::draw(ofVec2f point){
 	draw(ofRectangle(point.x,point.y,testImage.getWidth(), testImage.getHeight() ));
 }
@@ -109,18 +113,22 @@ void ofxCvCheckerboardPreview::threadedFunction() {
 			vector<Point2f> points;
 			boardFound = calib.findBoard(toCv(internalPixels), points);
 			if (boardFound){
+				cout << "!!!! found board" << endl;
 				boardLastFoundTime = ofGetElapsedTimef();
 				drawLock.lock();
 				imagePoints = points;
 				drawLock.unlock();
 			}
 			else{
+				cout << "no board" << endl;
+
 				drawLock.lock();
 				imagePoints.clear();
 				drawLock.unlock();
 				
 			}
 			newBoardToFind = false;
+			ofSleepMillis(5);
 		}
 	}
 }

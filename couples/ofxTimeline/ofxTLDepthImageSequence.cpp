@@ -111,7 +111,9 @@ void ofxTLDepthImageSequence::mouseMoved(ofMouseEventArgs& args){
 
 void ofxTLDepthImageSequence::mouseDragged(ofMouseEventArgs& args){
 	if( bounds.inside(args.x, args.y) ){
-		selectFrame( indexForScreenX(args.x, videoThumbs.size()) );
+		int index = indexForScreenX(args.x, videoThumbs.size());
+		selectFrame(index);
+		timeline->setCurrentFrame(index);
 	}
 }
 
