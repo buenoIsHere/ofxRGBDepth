@@ -8,12 +8,13 @@
  */
 
 #include "ofxRGBDAlignment.h"
-
+#include "ofxXmlSettings.h"
 
 ofxRGBDAlignment::ofxRGBDAlignment() {
-	xshift = 9;
-	yshift = 20;
-	applyShader = true;
+	guiIsSetup = false;
+	selectedDepthImage = -1;
+	selectedRgbImage = -1;
+	
 }
 
 //-----------------------------------------------
@@ -25,54 +26,107 @@ ofxRGBDAlignment::~ofxRGBDAlignment() {
 //-----------------------------------------------
 
 void ofxRGBDAlignment::setup(int squaresWide, int squaresTall, int squareSize) {
-	hasDepthImage = false;
-	hasColorImage = false;
-	
 	depthCalibration.setPatternSize(squaresWide, squaresTall);
 	depthCalibration.setSquareSize(squareSize);
 	
-	colorCalibration.setPatternSize(squaresWide, squaresTall);
-	colorCalibration.setSquareSize(squareSize);
+	rgbCalibration.setPatternSize(squaresWide, squaresTall);
+	rgbCalibration.setSquareSize(squareSize);
 
-	//bin -> appname -> category -> apps -> of
-	rgbdShader.setGeometryInputType(GL_TRIANGLES); 
-	rgbdShader.setGeometryOutputType(GL_TRIANGLE_STRIP);
-	rgbdShader.setGeometryOutputCount(6);
-	rgbdShader.load("../../../../../addons/ofxRGBDepth/assets/rgbd.vert",
-					"../../../../../addons/ofxRGBDepth/assets/rgbd.frag",
-					"../../../../../addons/ofxRGBDepth/assets/rgbd.geom");
-//	rgbdShader.load("../../../../../addons/ofxRGBDepth/assets/rgbd.vert",
-//					"../../../../../addons/ofxRGBDepth/assets/rgbd.frag");
-	
-	rgbdShader.begin();
-	rgbdShader.setUniform1i("externalTexture", 0);
-	
-	mesh.setUsage(GL_STREAM_DRAW);
-	mesh.setMode(OF_PRIMITIVE_TRIANGLES);
-	
-	int w = 640;
-	int h = 240;
-	for(int i = 0; i < w*h; i++) {
- 		mesh.addVertex(ofVec3f(0,0,0));
-		mesh.addTexCoord(ofVec2f(0,0));
-	}
-	
-	for (int y = 0; y < h-1; y++){
-		for (int x=0; x < w-1; x++){
-			ofIndexType a,b,c;
-			a = x+y*w;
-			b = (x+1)+y*w;
-			c = x+(y+1)*w;
-			mesh.addTriangle(a, b, c);
-			
-			a = (x+1)+y*w;
-			b = x+(y+1)*w;
-			c = (x+1)+(y+1)*w;
-			mesh.addTriangle(a, b, c);
-		}
-	}	
 }
 
+void ofxRGBDAlignment::addRGBCalibrationImage(string rgbCalibrationImagePath){
+	CalibrationImage ci;
+	ci.filepath = rgbCalibrationImagePath;
+	if(!ci.image.loadImage(ci.filepath)){
+		ofLogError("ofxRGBDAlignment -- Couldn't load RGB Calibration Image at path " + rgbCalibrationImagePath);
+		return;
+	}
+	ci.image.setImageType(OF_IMAGE_GRAYSCALE);
+	ci.subpixelRefinement = 11;
+	ci.reprojectionError = 0;
+	rgbImages.push_back( ci );
+}
+
+void ofxRGBDAlignment::addDepthCalibrationImage(string depthCalibrationImagePath){
+	CalibrationImage ci;
+	ci.filepath = depthCalibrationImagePath;
+	if(!ci.image.loadImage(ci.filepath)){
+		ofLogError("ofxRGBDAlignment -- Couldn't load RGB Calibration Image at path " + depthCalibrationImagePath);
+		return;
+	}
+	ci.image.setImageType(OF_IMAGE_GRAYSCALE);
+	ci.subpixelRefinement = 11;
+	ci.reprojectionError = 0;
+	depthImages.push_back( ci );	
+	
+
+}
+
+void ofxRGBDAlignment::addCalibrationImagePair(string depthCalibrationImagePath, string rgbCalibrationPath){
+	addRGBCalibrationImage(rgbCalibrationPath);
+	addDepthCalibrationImage(depthCalibrationImagePath);
+}
+
+void ofxRGBDAlignment::addRGBCalibrationDirectory(string rgbImageDirectory){
+	ofDirectory dir(rgbImageDirectory);
+	if(!dir.exists()){
+		ofLogError("ofxRGBDAlignment -- RGB Image Directory " + rgbImageDirectory + " does not exist");
+		return;
+	}
+	
+	dir.allowExt("png");
+	dir.allowExt("jpg");	
+	dir.listDir();
+
+	for(int i = 0; i < dir.numFiles(); i++){
+		addRGBCalibrationImage( dir.getPath(i) );
+		cout << "adding RGB image " << dir.getPath(i) << endl;
+	}
+	
+	generateAlignment();
+	if (guiIsSetup) {
+		recalculateImageDrawRects();
+	}
+	
+}
+
+void ofxRGBDAlignment::addDepthCalibrationDirectory(string depthImageDirectory){
+	ofDirectory dir(depthImageDirectory);
+	if(!dir.exists()){
+		ofLogError("ofxRGBDAlignment -- RGB Image Directory " + depthImageDirectory + " does not exist");
+		return;
+	}
+	dir.allowExt("png");
+	dir.allowExt("jpg");
+	dir.listDir();
+	cout << "found " << dir.numFiles() << " for depth directory " << endl;
+	for(int i = 0; i < dir.numFiles(); i++){
+		addDepthCalibrationImage( dir.getPath(i) );
+		cout << "adding DEPTH image " << dir.getPath(i) << endl;
+	}
+	
+	generateAlignment();
+	if (guiIsSetup) {
+		recalculateImageDrawRects();
+	}
+	
+}
+
+void ofxRGBDAlignment::addCalibrationDirectoryPair(string depthImageDirectory, string rgbImageDirectory){
+	addDepthCalibrationDirectory(depthImageDirectory);
+	addRGBCalibrationDirectory(rgbImageDirectory);
+}
+
+void ofxRGBDAlignment::clearRGBImages(){
+	rgbImages.clear();
+}
+
+void ofxRGBDAlignment::clearDepthImages(){
+	depthImages.clear();
+}
+
+///~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/*
 //-----------------------------------------------
 bool ofxRGBDAlignment::addCalibrationImagePair(ofPixels &ir, ofPixels &camera) {
 
@@ -107,9 +161,10 @@ bool ofxRGBDAlignment::addCalibrationImagePair(ofPixels &ir, ofPixels &camera) {
 	//cout << " NOT READY! " << depthCalibration.isReady() << " " <<  colorCalibration.isReady()  << " ? ?" << depthCalibration.imagePoints.size() << " " << colorCalibration.imagePoints.size() << endl;
 	return false;
 }
+*/
 
 //-----------------------------------------------
-
+/*
 bool ofxRGBDAlignment::calibrateFromDirectoryPair(string depthImageDirectory, string colorImageDirectory){
 	
 	depthCalibration.calibrateFromDirectory(depthImageDirectory);
@@ -123,16 +178,328 @@ bool ofxRGBDAlignment::calibrateFromDirectoryPair(string depthImageDirectory, st
 	
 	return depthCalibration.isReady() && colorCalibration.isReady();
 }
+*/
+
+void ofxRGBDAlignment::discardCurrentPair(){
+	if(selectedRgbImage != -1 && selectedDepthImage != -1){
+		rgbImages.erase(rgbImages.begin() + selectedRgbImage);
+		depthImages.erase(depthImages.begin() + selectedDepthImage);
+		selectedRgbImage = -1;
+		selectedDepthImage = -1;
+	}
+}
+
+//save and load the current image sets 
+void ofxRGBDAlignment::saveState(string filePath){
+	stateFilePath = filePath;
+	saveState();
+}
+
+void ofxRGBDAlignment::saveState(){
+	ofxXmlSettings imageLocations;
+	imageLocations.addTag("iamges");
+	imageLocations.pushTag("images");
+	
+	imageLocations.addTag("rgbimages");
+	imageLocations.pushTag("rgbimages");
+	for(int i = 0; i < rgbImages.size(); i++){
+		imageLocations.addValue("image", rgbImages[i].filepath);
+	}
+	imageLocations.popTag();
+	
+	
+	imageLocations.addTag("depthimages");
+	imageLocations.pushTag("depthimages");
+	for(int i = 0; i < depthImages.size(); i++){
+		imageLocations.addValue("image", depthImages[i].filepath);	
+	}
+	imageLocations.popTag();
+	
+	imageLocations.popTag();
+	imageLocations.saveFile(stateFilePath);
+}
+
+void ofxRGBDAlignment::loadState(string filePath){
+	stateFilePath = filePath;
+	ofxXmlSettings imageLocations;
+	if(imageLocations.loadFile(stateFilePath)){
+		imageLocations.pushTag("images");
+		imageLocations.pushTag("rgbimages");		
+		int numRGBImages = imageLocations.getNumTags("images");
+		for(int i = 0; i < numRGBImages; i++){
+			addRGBCalibrationImage(imageLocations.getValue("image", "", i));
+		}
+		imageLocations.popTag();//rgb images
+		
+		imageLocations.pushTag("depthimages");		
+		int numDepthImages = imageLocations.getNumTags("images");
+		for(int i = 0; i < numDepthImages; i++){
+			addDepthCalibrationImage(imageLocations.getValue("image", "", i));
+		}
+		imageLocations.popTag();//depthimages
+		
+		imageLocations.popTag();
+		recalculateImageDrawRects();
+	}
+	else {
+		ofLogError("ofxRGBDAlignment -- failed to load image locations at " + filePath );
+	}
+}
+
+
+bool ofxRGBDAlignment::generateAlignment(){
+	rgbCalibration.imagePoints.clear();
+	depthCalibration.imagePoints.clear();
+	for(int i = 0; i < rgbImages.size(); i++){
+		rgbImages[i].hasCheckerboard = rgbCalibration.add(toCv(rgbImages[i].image));
+	}
+	
+	for(int i = 0; i < depthImages.size(); i++){
+		depthImages[i].hasCheckerboard = depthCalibration.add(toCv(depthImages[i].image));
+	}
+	
+	if(depthImages.size() > 0){
+		depthCalibration.calibrate();
+	}
+	if(rgbImages.size() > 0){
+		rgbCalibration.calibrate();
+	}
+	
+	//set reprojection errors
+	int skip = 0;
+	for(int i = 0; i < depthImages.size(); i++){
+		if(!depthImages[i].hasCheckerboard) skip++;
+		depthImages[i].reprojectionError = depthCalibration.getReprojectionError(i-skip);
+	}
+	skip = 0;
+	for(int i = 0; i < rgbImages.size(); i++){
+		if(!rgbImages[i].hasCheckerboard) skip++;
+		rgbImages[i].reprojectionError = rgbCalibration.getReprojectionError(i-skip);
+	}
+	
+	if(rgbImages.size() == depthImages.size() && depthImages.size() > 3){
+		depthCalibration.getTransformation(rgbCalibration, rotationDepthToRGB, translationDepthToRGB);
+		rgbCalibration.getTransformation(depthCalibration, rotationRGBToDepth, translationRGBToDepth);
+	}
+	
+	return ready();
+}
 
 bool ofxRGBDAlignment::ready(){
-	return depthCalibration.isReady() && colorCalibration.isReady();
+	return depthCalibration.isReady() && rgbCalibration.isReady();
 }
 
-void ofxRGBDAlignment::saveCalibration() {
-	depthCalibration.save("depthCalib.yml");	
-	colorCalibration.save("colorCalib.yml");
+void ofxRGBDAlignment::saveAlignment(string saveDirectory) {
+	if(ready()){
+		ofDirectory dir(saveDirectory);
+		if(!dir.exists()){
+			dir.create(true);
+		}
+		depthCalibration.save(saveDirectory+"/depthCalib.yml");	
+		rgbCalibration.save(saveDirectory+"/rgbCalib.yml");
+	}
+	else {
+		ofLogWarning("ofxRGBDAlignment -- Could not save alignment, it's not ready");
+	}
 }
 
+
+Calibration & ofxRGBDAlignment::getDepthCalibration(){
+	return depthCalibration;
+}
+
+Calibration & ofxRGBDAlignment::getRGBCalibration(){
+	return rgbCalibration;
+}
+
+
+////////// GUI STUFF
+
+void ofxRGBDAlignment::setupGui(float x, float y, float maxDrawWidth){
+	guiIsSetup = true;
+	ofRegisterKeyEvents(this);
+	ofRegisterMouseEvents(this);
+	guiPosition = ofVec2f(x,y);
+	maxGuiDrawWidth = maxDrawWidth;
+	infoBoxHeight = 20;//so we can write info about the image below
+	recalculateImageDrawRects();
+	
+}
+
+void ofxRGBDAlignment::setMaxDrawWidth(float maxDrawWidth){
+	maxGuiDrawWidth = maxDrawWidth;
+	recalculateImageDrawRects();
+}
+
+void ofxRGBDAlignment::drawGui(){
+	drawImagePairs();
+	//TOOD add in previews for selected objects
+	
+}
+
+void ofxRGBDAlignment::drawImagePairs(){
+	drawDepthImages();
+	drawRGBImages();
+}
+
+void ofxRGBDAlignment::drawDepthImages(){
+	ofPushStyle();
+	for(int i = 0; i < depthImages.size(); i++){
+		ofRectangle drawRect = depthImages[i].drawRect;
+		if(depthImages[i].hasCheckerboard){
+			ofSetColor(255);
+		}
+		else{
+			ofSetColor(255, 0, 0);
+		}
+		depthImages[i].image.draw(drawRect);
+		if(ready()){
+			ofDrawBitmapString("Error: " + ofToString(depthImages[i].reprojectionError), drawRect.x, drawRect.y+drawRect.height+10);
+		}
+	}
+	
+	if(selectedDepthImage != -1){
+		ofPushStyle();
+		ofNoFill();
+		ofSetColor(255, 0, 0);
+		ofSetLineWidth(2);
+		ofRect(depthImages[selectedDepthImage].drawRect);
+		ofPopStyle();
+	}
+	ofPopStyle();
+}
+
+void ofxRGBDAlignment::drawRGBImages(){
+	ofPushStyle();
+	for(int i = 0; i < rgbImages.size(); i++){
+		ofRectangle drawRect = rgbImages[i].drawRect;
+		rgbImages[i].image.draw(drawRect);
+		if(rgbImages[i].hasCheckerboard){
+			ofSetColor(255);
+		}
+		else{
+			ofSetColor(255, 0, 0);
+		}
+		
+		if(ready()){
+			ofDrawBitmapString("Error: " + ofToString(rgbImages[i].reprojectionError), drawRect.x, drawRect.y+drawRect.height+10);
+		}
+	}
+	
+	if(selectedRgbImage != -1){
+		ofPushStyle();
+		ofNoFill();
+		ofSetColor(255, 0, 0);
+		ofSetLineWidth(2);
+		ofRect(rgbImages[selectedRgbImage].drawRect);
+		ofPopStyle();
+	}
+	ofPopStyle();
+}
+
+ofImage& ofxRGBDAlignment::getCurrentDepthImage(){
+	return currentDepthImage;
+}
+
+ofImage& ofxRGBDAlignment::getCurrentRGBImage(){
+	return currentRGBImage;
+}
+
+void ofxRGBDAlignment::recalculateImageDrawRects(){
+
+	if(depthImages.size() == 0 && rgbImages.size() == 0){
+		return;
+	}
+	
+	//we calculate a shared width for each image, and find the right height to maintain aspect ratio
+	float calculatedDrawWidth;
+	float calculatedDepthDrawHeight = 0;
+	float calculatedRGBDrawHeight = 0;
+	if(depthImages.size() > rgbImages.size()){
+		calculatedDrawWidth = MIN(depthImages[0].image.getWidth(), maxGuiDrawWidth/depthImages.size());
+	}
+	else{
+		calculatedDrawWidth = MIN(rgbImages[0].image.getWidth(), maxGuiDrawWidth/rgbImages.size());
+	}
+	
+	if(depthImages.size() > 0){
+		calculatedDepthDrawHeight = calculatedDrawWidth/depthImages[0].image.getWidth() * depthImages[0].image.getHeight();
+	}
+	
+	if(rgbImages.size() > 0){
+		calculatedRGBDrawHeight = calculatedDrawWidth/rgbImages[0].image.getWidth() * rgbImages[0].image.getHeight();
+	}
+	
+	cout << "cslculated draw width is " << calculatedDrawWidth << " rgb height " << calculatedRGBDrawHeight << " depth height " << calculatedDepthDrawHeight << endl;
+	
+	for(int i = 0; i < depthImages.size(); i++){
+		depthImages[i].drawRect = ofRectangle(guiPosition.x + i*calculatedDrawWidth, guiPosition.y, calculatedDrawWidth, calculatedDepthDrawHeight);
+	}
+	
+	for(int i = 0; i < rgbImages.size(); i++){
+		rgbImages[i].drawRect = ofRectangle(guiPosition.x + i*calculatedDrawWidth, guiPosition.y+calculatedDepthDrawHeight+infoBoxHeight, calculatedDrawWidth, calculatedRGBDrawHeight);
+	}
+}
+
+void ofxRGBDAlignment::keyPressed(ofKeyEventArgs& args){
+	if (args.key == OF_KEY_LEFT) {
+		if(selectedRgbImage != -1){
+			
+		}
+	}
+	else if(args.key == OF_KEY_RIGHT){
+		if(selectedRgbImage != -1 && selectedRgbImage != rgbImages.size()-1){
+			CalibrationImage temp = rgbImages[selectedRgbImage+1];
+			rgbImages[selectedRgbImage+1] = rgbImages[selectedRgbImage];
+			rgbImages[selectedRgbImage] = temp;
+		}
+	}
+	else if(args.key == OF_KEY_DEL){
+		if(selectedRgbImage != -1){
+			rgbImages.erase(rgbImages.begin()+selectedRgbImage);
+			selectedRgbImage = -1;
+		}
+		if(selectedDepthImage != -1){
+			depthImages.erase(depthImages.begin()+selectedDepthImage);
+			selectedDepthImage = -1;
+		}
+	}
+}
+
+void ofxRGBDAlignment::keyReleased(ofKeyEventArgs& args){
+	
+}
+
+void ofxRGBDAlignment::mouseMoved(ofMouseEventArgs& args){
+
+}
+
+void ofxRGBDAlignment::mouseDragged(ofMouseEventArgs& args){
+	
+}
+
+void ofxRGBDAlignment::mousePressed(ofMouseEventArgs& args){
+	selectedDepthImage = -1;
+	selectedRgbImage = -1;
+	for(int i = 0; i < depthImages.size(); i++){
+		if (depthImages[i].drawRect.inside(args.x,args.y)) {
+			selectedDepthImage = i;
+			break;
+		}
+	}
+	for(int i = 0; i < rgbImages.size(); i++){
+		if (rgbImages[i].drawRect.inside(args.x,args.y)) {
+			selectedRgbImage = i;
+			break;
+		}
+	}
+}
+
+void ofxRGBDAlignment::mouseReleased(ofMouseEventArgs& args){
+
+}
+
+/*
 void ofxRGBDAlignment::loadCalibration(string calibrationDirectory) {
 	
 	depthCalibration.load(calibrationDirectory+"/depthCalib.yml");
@@ -147,154 +514,4 @@ void ofxRGBDAlignment::loadCalibration(string calibrationDirectory) {
 	cout << "Color to Kinect:" << endl << rotationColorToDepth << endl << translationColorToDepth << endl;
 
 }
-
-void ofxRGBDAlignment::resetCalibration() {
-	//TODO:
-}
-
-Calibration & ofxRGBDAlignment::getKinectCalibration(){
-	return depthCalibration;
-}
-
-Calibration & ofxRGBDAlignment::getExternalCalibration(){
-	return colorCalibration;
-}
-
-//-----------------------------------------------
-void ofxRGBDAlignment::setColorTexture(ofBaseHasTexture& colorImage) {
-	currentColorImage = &colorImage;
-	hasColorImage = true;
-}
-
-//-----------------------------------------------
-void ofxRGBDAlignment::update(unsigned short* depthPixelsRaw){
-	currentDepthImage = depthPixelsRaw;
-	hasDepthImage = true;
-	update();
-}
-
-void ofxRGBDAlignment::update(){
-	int w = 640;
-	int h = 240;
-	
-	int start = ofGetElapsedTimeMillis();
-	
-	Point2d fov = depthCalibration.getUndistortedIntrinsics().getFov();
-	float fx = tanf(ofDegToRad(fov.x) / 2) * 2;
-	float fy = tanf(ofDegToRad(fov.y) / 2) * 2;
-	
-	Point2d principalPoint = depthCalibration.getUndistortedIntrinsics().getPrincipalPoint();
-	cv::Size imageSize = depthCalibration.getUndistortedIntrinsics().getImageSize();
-	
-	int validPointCount = 0;
-	ofVec3f center(0,0,0);
-	int index = 0;
-	for(int y = 0; y < h; y++) {
-		for(int x = 0; x < w; x++) {
-
-            unsigned short z = currentDepthImage[y*w+x];
-            float xReal = (((float) x - principalPoint.x) / imageSize.width) * z * fx + xshift;
-            float yReal = (((float) y - principalPoint.y) / imageSize.height) * z * fy + yshift;
-			mesh.setVertex(index, ofVec3f(xReal, yReal, z));
-			index++;
-		}
-	}
-	
-	//cout << "unproject points " << (ofGetElapsedTimeMillis() - start) << endl;
-	start = ofGetElapsedTimeMillis();
-	
-	Mat pcMat = Mat(toCv(mesh));
-
-	//cout << "create mesh " << (ofGetElapsedTimeMillis() - start) << endl;
-	start = ofGetElapsedTimeMillis();
-	
-	//cout << "PC " << pcMat << endl;
-	//	cout << "Rot Depth->Color " << rotationDepthToColor << endl;
-	//	cout << "Trans Depth->Color " << translationDepthToColor << endl;
-	//	cout << "Intrs Cam " << colorCalibration.getDistortedIntrinsics().getCameraMatrix() << endl;
-	//	cout << "Intrs Dist Coef " << colorCalibration.getDistCoeffs() << endl;
-	
-	imagePoints.clear();
-	projectPoints(pcMat,
-				  rotationDepthToColor, translationDepthToColor,
-				  colorCalibration.getDistortedIntrinsics().getCameraMatrix(),
-				  colorCalibration.getDistCoeffs(),
-				  imagePoints);
-	
-	//cout << "project points " << (ofGetElapsedTimeMillis() - start ) << endl;
-	
-	for(int i = 0; i < imagePoints.size(); i++) {
-		ofVec2f textureCoord = ofVec2f(imagePoints[i].x, imagePoints[i].y);
-		mesh.setTexCoord(i, textureCoord);
-	}
-}
-
-ofVboMesh& ofxRGBDAlignment::getMesh(){
-	return mesh;
-}
-
-void ofxRGBDAlignment::drawCalibration(bool left){
-    if(left){
-        depthCalibration.draw3d();
-    }
-    else{
-        colorCalibration.draw3d();
-    }
-}
-
-ofVec3f ofxRGBDAlignment::getMeshCenter(){
-	return meshCenter;
-}
-
-float ofxRGBDAlignment::getMeshDistance(){
-	return meshDistance;
-}
-
-void ofxRGBDAlignment::drawMesh() {
-	glPushMatrix();
-	glScaled(1, -1, 1);
-
-	glEnable(GL_DEPTH_TEST);
-	currentColorImage->getTextureReference().bind();
-	mesh.drawFaces();
-	currentColorImage->getTextureReference().unbind();
-	glDisable(GL_DEPTH_TEST);
-	
-	glPopMatrix();
-
-
-}
-
-void ofxRGBDAlignment::drawPointCloud() {
-	
-	ofPushStyle();
-	
-	ofSetColor(255);
-	glPointSize(2);
-    
-	glPushMatrix();
-	glScaled(1, -1, 1);
-	
-	currentColorImage->getTextureReference().bind();
-	
-	glEnable(GL_DEPTH_TEST);
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-    
-	glTexCoordPointer(2, GL_FLOAT, sizeof(ofVec2f), &(mesh.getTexCoords()[0].x));
-	glVertexPointer(3, GL_FLOAT, sizeof(ofVec3f), &(mesh.getVertices()[0].x));
-                   
-	glDrawArrays(GL_POINTS, 0, mesh.getVertices().size());
-    
-    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-	glDisableClientState(GL_VERTEX_ARRAY);
-	
-	glDisable(GL_DEPTH_TEST);
-	
-	currentColorImage->getTextureReference().unbind();
-	
-	glPopMatrix();
-	
-	ofPopStyle();
-}
-
+*/

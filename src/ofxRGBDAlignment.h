@@ -2,9 +2,15 @@
  *  ofxRGBDAlignment.h
  *  DepthExternalRGB
  *
- *  Created by Jim on 10/18/11.
- *  Copyright 2011 University of Washington. All rights reserved.
+ * The alignment tool helps organize a series of checkerboard alignment images
+ * to produce a set of calibration files. 
  *
+ * A big part of the process of creating an external <-> depth alignment is having good alignment images
+ * One bad checkerboard can throw the entire aligment off, so this tool helps weed out bad alignment pairs
+ * by checking against reprojection errors
+ *
+ * This class encapsulates a gui system that assists previewing the alignment images, adding
+ * and removing them from the set.
  */
 
 #pragma once
@@ -15,6 +21,20 @@
 using namespace ofxCv;
 using namespace cv;
 
+typedef struct {
+	string filepath;
+	ofImage image;
+	bool hasCheckerboard;
+	float subpixelRefinement;
+	float reprojectionError;
+	ofRectangle drawRect;
+} CalibrationImage;
+
+typedef struct {
+	CalibrationImage* rgbImage;
+	CalibrationImage* depthImage;
+} CalibrationImagePair;
+
 class ofxRGBDAlignment {
   public:
 	ofxRGBDAlignment();
@@ -22,61 +42,84 @@ class ofxRGBDAlignment {
 	
 	void setup(int squaresWide, int squaresTall, int squareSize);
 	
-	bool addCalibrationImagePair(ofPixels& ir, ofPixels &camera);
-	bool calibrateFromDirectoryPair(string irImageDirectory, string colorImageDirectory);
+	void addRGBCalibrationImage(string rgbCalibrationImagePath);
+	void addDepthCalibrationImage(string depthCalibrationImagePath);
+	void addCalibrationImagePair(string depthCalibrationImagePath, string rgbCalibrationPath);
+	
+	void addRGBCalibrationDirectory(string rgbImageDirectory);
+	void addDepthCalibrationDirectory(string depthImageDirectory);
+	void addCalibrationDirectoryPair(string depthImageDirectory, string rgbImageDirectory);
+	
+	void clearRGBImages();
+	void clearDepthImages();
+	
 	bool ready();
+	bool generateAlignment();
 
-	//void setColorImage(ofImage& colorImage);
-	void setColorTexture(ofBaseHasTexture& colorImage); 
-	
-    void update(unsigned short* depthPixelsRaw);
-	void update();
-	
-	void drawMesh();
-	void drawPointCloud();
-	
-	void saveCalibration();
-	void loadCalibration(string calibrationDirectory);
-	void resetCalibration();
+	//save and load the current image sets 
+	void saveState();
+	void saveState(string filePath);
+	void loadState(string filePath);
 
-	Calibration & getKinectCalibration();
-	Calibration & getExternalCalibration();
-	//populated with vertices, texture coords, and indeces
-	ofVboMesh & getMesh();
+	void draw3DCalibrationDebug(bool left);
 	
-	void drawCalibration(bool left);
-    
-	ofVec3f getMeshCenter();
-	float getMeshDistance();
+	Calibration& getDepthCalibration();
+	Calibration& getRGBCalibration();
 	
-    float yshift;
-	float xshift;
+	//create calibration files from the current images for use in ofxRGBDRenderer
+	void saveAlignment(string saveDirectory);
 	
-	bool applyShader;
-	ofShader rgbdShader;
+	//GUI STUFF
+	//perhaps this is bad deisgn to mix these two together, but it works well in this case
+	void setupGui(float x, float y, float maxDrawWidth); //enables events
+	void setMaxDrawWidth(float maxDrawWidth);
 	
+	void drawGui();
+	
+	void drawImagePairs();
+	void drawDepthImages();
+	void drawRGBImages();
+
+	//discards the current selected set of images
+	void discardCurrentPair();
+	
+	ofImage& getCurrentDepthImage();
+	ofImage& getCurrentRGBImage();
+	
+	void keyPressed(ofKeyEventArgs& args);
+	void keyReleased(ofKeyEventArgs& args);
+	void mouseMoved(ofMouseEventArgs& args);
+	void mouseDragged(ofMouseEventArgs& args);
+	void mousePressed(ofMouseEventArgs& args);
+	void mouseReleased(ofMouseEventArgs& args);
+
   protected:
-	bool hasDepthImage;
-	bool hasColorImage;
-	bool hasPointCloud;
-		
-	ofBaseHasTexture* currentColorImage;
-	unsigned short* currentDepthImage;
 	
+	string stateFilePath;
+	vector<CalibrationImage> rgbImages;
+	vector<CalibrationImage> depthImages;
+	vector<CalibrationImagePair> images;
 	
-	
-	vector<Point2f> imagePoints;    
-	ofVboMesh mesh;
-    vector<ofIndexType> indeces;
-    vector<ofVec2f> texcoords;
-    vector<ofVec3f> vertices;
-
-	Calibration depthCalibration, colorCalibration;    
-	Mat rotationDepthToColor, translationDepthToColor;
-	Mat rotationColorToDepth, translationColorToDepth;
+	Calibration depthCalibration, rgbCalibration;    
+	Mat rotationDepthToRGB, translationDepthToRGB;
+	Mat rotationRGBToDepth, translationRGBToDepth;
 	Mat rotation, translation;
 	
-	ofVec3f meshCenter;
-	float meshDistance;
+	ofRectangle depthImageBoundingRect;
+	ofRectangle rgbImageBoundingRect;
+	
+	bool guiIsSetup;
+	int selectedDepthImage;
+	int selectedRgbImage;
+	ofImage currentRGBImage;
+	ofImage currentDepthImage;
+	float infoBoxHeight;
+	void recalculateImageDrawRects();
+	
+	ofVec2f guiPosition;
+	float maxGuiDrawWidth;
+
+	
+	
 	
 };
