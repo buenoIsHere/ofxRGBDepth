@@ -97,7 +97,6 @@ class ofxRGBDAlignment {
 	Calibration depthCalibration, rgbCalibration;    
 	Mat rotationDepthToRGB, translationDepthToRGB;
 	Mat rotationRGBToDepth, translationRGBToDepth;
-	Mat rotation, translation;
 	
 	ofRectangle depthImageBoundingRect;
 	ofRectangle rgbImageBoundingRect;

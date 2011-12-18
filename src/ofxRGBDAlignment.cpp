@@ -246,8 +246,16 @@ void ofxRGBDAlignment::saveAlignment(string saveDirectory) {
 		if(!dir.exists()){
 			dir.create(true);
 		}
+		cout << "saving alignment, rgb cam dist is " << rgbCalibration.getDistortedIntrinsics().getCameraMatrix() << endl;
+		cout << "saving alignment, depth cam dist is " << depthCalibration.getDistortedIntrinsics().getCameraMatrix() << endl;
+		
 		depthCalibration.save(saveDirectory+"/depthCalib.yml");	
 		rgbCalibration.save(saveDirectory+"/rgbCalib.yml");
+		saveMat(rotationDepthToRGB, saveDirectory+"/rotationDepthToRGB.yml");
+		saveMat(translationDepthToRGB, saveDirectory+"/translationDepthToRGB.yml");
+		saveMat(rotationRGBToDepth, saveDirectory+"/rotationRGBToDepth.yml");
+		saveMat(translationRGBToDepth, saveDirectory+"/translationRGBToDepth.yml");
+
 	}
 	else {
 		ofLogWarning("ofxRGBDAlignment -- Could not save alignment, it's not ready");

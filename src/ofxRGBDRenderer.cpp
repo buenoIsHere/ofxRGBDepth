@@ -18,6 +18,24 @@ ofxRGBDRenderer::~ofxRGBDRenderer(){
 }
 
 void ofxRGBDRenderer::setup(string calibrationDirectory){
+	
+	depthCalibration.load(calibrationDirectory+"/depthCalib.yml");
+	rgbCalibration.load(calibrationDirectory+"/rgbCalib.yml");
+	
+	loadMat(rotationDepthToRGB, calibrationDirectory+"/rotationDepthToRGB.yml");
+	loadMat(translationDepthToRGB, calibrationDirectory+"/translationDepthToRGB.yml");
+	
+	/*
+	cout << "rotation is " << rotationDepthToRGB << endl;
+	cout << "translation is " << translationDepthToRGB << endl;
+	
+	cout << "rgb cam matrix " << rgbCalibration.getDistortedIntrinsics().getCameraMatrix() << endl;
+	cout << "rgb cam dist coef " << rgbCalibration.getDistCoeffs() << endl;
+
+	cout << "depth cam matrix " << depthCalibration.getDistortedIntrinsics().getCameraMatrix() << endl;
+	cout << "depth cam dist coef " << depthCalibration.getDistCoeffs() << endl;
+	 */
+	
 	//bin -> appname -> category -> apps -> of
 	rgbdShader.setGeometryInputType(GL_TRIANGLES); 
 	rgbdShader.setGeometryOutputType(GL_TRIANGLE_STRIP);
@@ -25,9 +43,6 @@ void ofxRGBDRenderer::setup(string calibrationDirectory){
 	rgbdShader.load("../../../../../addons/ofxRGBDepth/assets/rgbd.vert",
 					"../../../../../addons/ofxRGBDepth/assets/rgbd.frag",
 					"../../../../../addons/ofxRGBDepth/assets/rgbd.geom");
-	//	rgbdShader.load("../../../../../addons/ofxRGBDepth/assets/rgbd.vert",
-	//					"../../../../../addons/ofxRGBDepth/assets/rgbd.frag");
-	
 	rgbdShader.begin();
 	rgbdShader.setUniform1i("externalTexture", 0);
 	
@@ -58,16 +73,14 @@ void ofxRGBDRenderer::setup(string calibrationDirectory){
 }
 
 //-----------------------------------------------
-void ofxRGBDRenderer::setColorTexture(ofBaseHasTexture& colorImage) {
-	currentColorImage = &colorImage;
-	hasColorImage = true;
+void ofxRGBDRenderer::setRGBTexture(ofBaseHasTexture& rgbImage) {
+	currentRGBImage = &rgbImage;
+	hasRGBImage = true;
 }
 
-//-----------------------------------------------
-void ofxRGBDRenderer::update(unsigned short* depthPixelsRaw){
+void ofxRGBDRenderer::setDepthImage(unsigned short* depthPixelsRaw){
 	currentDepthImage = depthPixelsRaw;
 	hasDepthImage = true;
-	update();
 }
 
 void ofxRGBDRenderer::update(){
@@ -77,11 +90,16 @@ void ofxRGBDRenderer::update(){
 	int start = ofGetElapsedTimeMillis();
 	
 	Point2d fov = depthCalibration.getUndistortedIntrinsics().getFov();
+	
+//	cout << "fov? " << fov.x << " " << fov.y << endl;
+	
 	float fx = tanf(ofDegToRad(fov.x) / 2) * 2;
 	float fy = tanf(ofDegToRad(fov.y) / 2) * 2;
 	
 	Point2d principalPoint = depthCalibration.getUndistortedIntrinsics().getPrincipalPoint();
 	cv::Size imageSize = depthCalibration.getUndistortedIntrinsics().getImageSize();
+//	cout << "principal point " << principalPoint.x << " " << principalPoint.y << endl;
+//	cout << "image size " << imageSize.width << " " << imageSize.height << endl;
 	
 	int validPointCount = 0;
 	ofVec3f center(0,0,0);
@@ -113,9 +131,9 @@ void ofxRGBDRenderer::update(){
 	
 	imagePoints.clear();
 	projectPoints(pcMat,
-				  rotationDepthToColor, translationDepthToColor,
-				  colorCalibration.getDistortedIntrinsics().getCameraMatrix(),
-				  colorCalibration.getDistCoeffs(),
+				  rotationDepthToRGB, translationDepthToRGB,
+				  rgbCalibration.getDistortedIntrinsics().getCameraMatrix(),
+				  rgbCalibration.getDistCoeffs(),
 				  imagePoints);
 	
 	//cout << "project points " << (ofGetElapsedTimeMillis() - start ) << endl;
@@ -128,15 +146,6 @@ void ofxRGBDRenderer::update(){
 
 ofVboMesh& ofxRGBDRenderer::getMesh(){
 	return mesh;
-}
-
-void ofxRGBDRenderer::drawCalibration(bool left){
-    if(left){
-        depthCalibration.draw3d();
-    }
-    else{
-        colorCalibration.draw3d();
-    }
 }
 
 ofVec3f ofxRGBDRenderer::getMeshCenter(){
@@ -152,9 +161,9 @@ void ofxRGBDRenderer::drawMesh() {
 	glScaled(1, -1, 1);
 	
 	glEnable(GL_DEPTH_TEST);
-	currentColorImage->getTextureReference().bind();
+	currentRGBImage->getTextureReference().bind();
 	mesh.drawFaces();
-	currentColorImage->getTextureReference().unbind();
+	currentRGBImage->getTextureReference().unbind();
 	glDisable(GL_DEPTH_TEST);
 	
 	glPopMatrix();
@@ -170,7 +179,7 @@ void ofxRGBDRenderer::drawPointCloud() {
 	glPushMatrix();
 	glScaled(1, -1, 1);
 	
-	currentColorImage->getTextureReference().bind();
+	currentRGBImage->getTextureReference().bind();
 	
 	glEnable(GL_DEPTH_TEST);
 	glEnableClientState(GL_VERTEX_ARRAY);
@@ -186,7 +195,7 @@ void ofxRGBDRenderer::drawPointCloud() {
 	
 	glDisable(GL_DEPTH_TEST);
 	
-	currentColorImage->getTextureReference().unbind();
+	currentRGBImage->getTextureReference().unbind();
 	
 	glPopMatrix();
 	

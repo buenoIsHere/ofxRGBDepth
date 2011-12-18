@@ -51,11 +51,13 @@ class ofxRGBDRenderer {
 
   protected:
 	
+	Calibration depthCalibration, rgbCalibration;    
+	Mat rotationDepthToRGB, translationDepthToRGB;
+
 	bool hasDepthImage;
-	bool hasColorImage;
-	bool hasPointCloud;
+	bool hasRGBImage;
 	
-	ofBaseHasTexture* currentColorImage;
+	ofBaseHasTexture* currentRGBImage;
 	unsigned short* currentDepthImage;
 	
 	vector<Point2f> imagePoints;    
