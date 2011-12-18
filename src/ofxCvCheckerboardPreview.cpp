@@ -113,15 +113,12 @@ void ofxCvCheckerboardPreview::threadedFunction() {
 			vector<Point2f> points;
 			boardFound = calib.findBoard(toCv(internalPixels), points);
 			if (boardFound){
-				cout << "!!!! found board" << endl;
 				boardLastFoundTime = ofGetElapsedTimef();
 				drawLock.lock();
 				imagePoints = points;
 				drawLock.unlock();
 			}
 			else{
-				cout << "no board" << endl;
-
 				drawLock.lock();
 				imagePoints.clear();
 				drawLock.unlock();

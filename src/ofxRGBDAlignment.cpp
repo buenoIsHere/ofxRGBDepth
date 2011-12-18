@@ -45,6 +45,7 @@ void ofxRGBDAlignment::addRGBCalibrationImage(string rgbCalibrationImagePath){
 	ci.subpixelRefinement = 11;
 	ci.reprojectionError = 0;
 	rgbImages.push_back( ci );
+	recalculateImageDrawRects();
 }
 
 void ofxRGBDAlignment::addDepthCalibrationImage(string depthCalibrationImagePath){
@@ -58,7 +59,7 @@ void ofxRGBDAlignment::addDepthCalibrationImage(string depthCalibrationImagePath
 	ci.subpixelRefinement = 11;
 	ci.reprojectionError = 0;
 	depthImages.push_back( ci );	
-	
+	recalculateImageDrawRects();
 
 }
 
@@ -125,68 +126,17 @@ void ofxRGBDAlignment::clearDepthImages(){
 	depthImages.clear();
 }
 
-///~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/*
-//-----------------------------------------------
-bool ofxRGBDAlignment::addCalibrationImagePair(ofPixels &ir, ofPixels &camera) {
-
-	if(depthCalibration.add(toCv(ir))){
-		if(!colorCalibration.add(toCv(camera))){
-			depthCalibration.imagePoints.erase(depthCalibration.imagePoints.end()-1);
-		}		
-	}
-	
-//	if(depthCalibration.imagePoints.size() != colorCalibration.imagePoints.size()){
-//		ofLogError("ofxRGBDAlignment -- image point sizes differ!");
-//		return false;
-//	}
-	
-	if(depthCalibration.imagePoints.size() > 3){
-		depthCalibration.calibrate();
-		colorCalibration.calibrate();
-	}
-	
-	if(depthCalibration.isReady() && colorCalibration.isReady()){
-		depthCalibration.getTransformation(colorCalibration, rotationDepthToColor, translationDepthToColor);
-		colorCalibration.getTransformation(depthCalibration, rotationColorToDepth, translationColorToDepth);
-		
-		cout << "Kinect to Color:" << endl << rotationDepthToColor << endl << translationDepthToColor << endl;
-		cout << "Color to Kinect:" << endl << rotationColorToDepth << endl << translationColorToDepth << endl;
-
-		cout << "Depth ERROR::: " << depthCalibration.getReprojectionError() << endl;
-		cout << "Color ERROR::: " << colorCalibration.getReprojectionError() << endl;
-		return true;
-	}
-	
-	//cout << " NOT READY! " << depthCalibration.isReady() << " " <<  colorCalibration.isReady()  << " ? ?" << depthCalibration.imagePoints.size() << " " << colorCalibration.imagePoints.size() << endl;
-	return false;
-}
-*/
-
-//-----------------------------------------------
-/*
-bool ofxRGBDAlignment::calibrateFromDirectoryPair(string depthImageDirectory, string colorImageDirectory){
-	
-	depthCalibration.calibrateFromDirectory(depthImageDirectory);
-	colorCalibration.calibrateFromDirectory(colorImageDirectory);
-	
-	depthCalibration.getTransformation(colorCalibration, rotationDepthToColor, translationDepthToColor);
-	colorCalibration.getTransformation(depthCalibration, rotationColorToDepth, translationColorToDepth);
-	
-	cout << "Kinect to Color:" << endl << rotationDepthToColor << endl << translationDepthToColor << endl;
-	cout << "Color to Kinect:" << endl << rotationColorToDepth << endl << translationColorToDepth << endl;
-	
-	return depthCalibration.isReady() && colorCalibration.isReady();
-}
-*/
-
 void ofxRGBDAlignment::discardCurrentPair(){
-	if(selectedRgbImage != -1 && selectedDepthImage != -1){
+	if(selectedRgbImage != -1){
 		rgbImages.erase(rgbImages.begin() + selectedRgbImage);
-		depthImages.erase(depthImages.begin() + selectedDepthImage);
 		selectedRgbImage = -1;
+	}
+	if(selectedDepthImage != -1){
+		depthImages.erase(depthImages.begin() + selectedDepthImage);
 		selectedDepthImage = -1;
 	}
+	generateAlignment();
+	recalculateImageDrawRects();	
 }
 
 //save and load the current image sets 
@@ -197,7 +147,7 @@ void ofxRGBDAlignment::saveState(string filePath){
 
 void ofxRGBDAlignment::saveState(){
 	ofxXmlSettings imageLocations;
-	imageLocations.addTag("iamges");
+	imageLocations.addTag("images");
 	imageLocations.pushTag("images");
 	
 	imageLocations.addTag("rgbimages");
@@ -225,20 +175,21 @@ void ofxRGBDAlignment::loadState(string filePath){
 	if(imageLocations.loadFile(stateFilePath)){
 		imageLocations.pushTag("images");
 		imageLocations.pushTag("rgbimages");		
-		int numRGBImages = imageLocations.getNumTags("images");
+		int numRGBImages = imageLocations.getNumTags("image");
 		for(int i = 0; i < numRGBImages; i++){
 			addRGBCalibrationImage(imageLocations.getValue("image", "", i));
 		}
 		imageLocations.popTag();//rgb images
 		
 		imageLocations.pushTag("depthimages");		
-		int numDepthImages = imageLocations.getNumTags("images");
+		int numDepthImages = imageLocations.getNumTags("image");
 		for(int i = 0; i < numDepthImages; i++){
 			addDepthCalibrationImage(imageLocations.getValue("image", "", i));
 		}
 		imageLocations.popTag();//depthimages
 		
 		imageLocations.popTag();
+		generateAlignment();
 		recalculateImageDrawRects();
 	}
 	else {
@@ -258,10 +209,10 @@ bool ofxRGBDAlignment::generateAlignment(){
 		depthImages[i].hasCheckerboard = depthCalibration.add(toCv(depthImages[i].image));
 	}
 	
-	if(depthImages.size() > 0){
+	if(depthCalibration.size() > 0){
 		depthCalibration.calibrate();
 	}
-	if(rgbImages.size() > 0){
+	if(rgbCalibration.size() > 0){
 		rgbCalibration.calibrate();
 	}
 	
@@ -314,7 +265,6 @@ Calibration & ofxRGBDAlignment::getRGBCalibration(){
 
 
 ////////// GUI STUFF
-
 void ofxRGBDAlignment::setupGui(float x, float y, float maxDrawWidth){
 	guiIsSetup = true;
 	ofRegisterKeyEvents(this);
@@ -353,9 +303,7 @@ void ofxRGBDAlignment::drawDepthImages(){
 			ofSetColor(255, 0, 0);
 		}
 		depthImages[i].image.draw(drawRect);
-		if(ready()){
-			ofDrawBitmapString("Error: " + ofToString(depthImages[i].reprojectionError), drawRect.x, drawRect.y+drawRect.height+10);
-		}
+		ofDrawBitmapString("Er " + ofToString(depthImages[i].reprojectionError, 3), drawRect.x, drawRect.y+drawRect.height+10);
 	}
 	
 	if(selectedDepthImage != -1){
@@ -381,9 +329,7 @@ void ofxRGBDAlignment::drawRGBImages(){
 			ofSetColor(255, 0, 0);
 		}
 		
-		if(ready()){
-			ofDrawBitmapString("Error: " + ofToString(rgbImages[i].reprojectionError), drawRect.x, drawRect.y+drawRect.height+10);
-		}
+		ofDrawBitmapString("Er " + ofToString(rgbImages[i].reprojectionError,3), drawRect.x, drawRect.y+drawRect.height+10);
 	}
 	
 	if(selectedRgbImage != -1){
@@ -430,8 +376,6 @@ void ofxRGBDAlignment::recalculateImageDrawRects(){
 		calculatedRGBDrawHeight = calculatedDrawWidth/rgbImages[0].image.getWidth() * rgbImages[0].image.getHeight();
 	}
 	
-	cout << "cslculated draw width is " << calculatedDrawWidth << " rgb height " << calculatedRGBDrawHeight << " depth height " << calculatedDepthDrawHeight << endl;
-	
 	for(int i = 0; i < depthImages.size(); i++){
 		depthImages[i].drawRect = ofRectangle(guiPosition.x + i*calculatedDrawWidth, guiPosition.y, calculatedDrawWidth, calculatedDepthDrawHeight);
 	}
@@ -454,16 +398,6 @@ void ofxRGBDAlignment::keyPressed(ofKeyEventArgs& args){
 			rgbImages[selectedRgbImage] = temp;
 		}
 	}
-	else if(args.key == OF_KEY_DEL){
-		if(selectedRgbImage != -1){
-			rgbImages.erase(rgbImages.begin()+selectedRgbImage);
-			selectedRgbImage = -1;
-		}
-		if(selectedDepthImage != -1){
-			depthImages.erase(depthImages.begin()+selectedDepthImage);
-			selectedDepthImage = -1;
-		}
-	}
 }
 
 void ofxRGBDAlignment::keyReleased(ofKeyEventArgs& args){
@@ -479,17 +413,21 @@ void ofxRGBDAlignment::mouseDragged(ofMouseEventArgs& args){
 }
 
 void ofxRGBDAlignment::mousePressed(ofMouseEventArgs& args){
-	selectedDepthImage = -1;
-	selectedRgbImage = -1;
 	for(int i = 0; i < depthImages.size(); i++){
 		if (depthImages[i].drawRect.inside(args.x,args.y)) {
 			selectedDepthImage = i;
+			if(i < rgbImages.size()){
+				selectedRgbImage = i;
+			}
 			break;
 		}
 	}
 	for(int i = 0; i < rgbImages.size(); i++){
 		if (rgbImages[i].drawRect.inside(args.x,args.y)) {
 			selectedRgbImage = i;
+			if(i < depthImages.size()){
+				selectedDepthImage = i;
+			}
 			break;
 		}
 	}
@@ -498,20 +436,3 @@ void ofxRGBDAlignment::mousePressed(ofMouseEventArgs& args){
 void ofxRGBDAlignment::mouseReleased(ofMouseEventArgs& args){
 
 }
-
-/*
-void ofxRGBDAlignment::loadCalibration(string calibrationDirectory) {
-	
-	depthCalibration.load(calibrationDirectory+"/depthCalib.yml");
-	colorCalibration.load(calibrationDirectory+"/colorCalib.yml");
-	depthCalibration.calibrate();
-	colorCalibration.calibrate();
-	
-	depthCalibration.getTransformation(colorCalibration, rotationDepthToColor, translationDepthToColor);
-	colorCalibration.getTransformation(depthCalibration, rotationColorToDepth, translationColorToDepth);
-	
-	cout << "Kinect to Color:" << endl << rotationDepthToColor << endl << translationDepthToColor << endl;
-	cout << "Color to Kinect:" << endl << rotationColorToDepth << endl << translationColorToDepth << endl;
-
-}
-*/

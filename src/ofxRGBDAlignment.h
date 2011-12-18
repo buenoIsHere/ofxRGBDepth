@@ -30,11 +30,6 @@ typedef struct {
 	ofRectangle drawRect;
 } CalibrationImage;
 
-typedef struct {
-	CalibrationImage* rgbImage;
-	CalibrationImage* depthImage;
-} CalibrationImagePair;
-
 class ofxRGBDAlignment {
   public:
 	ofxRGBDAlignment();
@@ -98,7 +93,6 @@ class ofxRGBDAlignment {
 	string stateFilePath;
 	vector<CalibrationImage> rgbImages;
 	vector<CalibrationImage> depthImages;
-	vector<CalibrationImagePair> images;
 	
 	Calibration depthCalibration, rgbCalibration;    
 	Mat rotationDepthToRGB, translationDepthToRGB;
@@ -118,8 +112,4 @@ class ofxRGBDAlignment {
 	
 	ofVec2f guiPosition;
 	float maxGuiDrawWidth;
-
-	
-	
-	
 };
