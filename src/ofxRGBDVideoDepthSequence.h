@@ -14,6 +14,7 @@
 #include "ofMain.h"
 
 typedef struct{
+	bool isTimeBased;
 	int videoFrame;
 	int depthFrame;
 } VideoDepthPair;
@@ -24,16 +25,18 @@ class ofxRGBDVideoDepthSequence {
 	~ofxRGBDVideoDepthSequence();
 	
 	void savePairingFile(string pairFileXml);
-	void loadPairingFile(string pairFileXml);
+	bool loadPairingFile(string pairFileXml);
 	
 	bool ready();
-	void addAlignedPair(int videoFrame, int depthFrame);
+	void addAlignedFrames(int videoFrame, int depthFrame);
+	void addAlignedTime(int videoMillis, int depthMillis);
 	void addAlignedPair(VideoDepthPair pair);
 	
 	void removeAlignedPair(int index);
 
 	int getDepthFrameForVideoFrame(int videoFrame);
-
+	bool isSequenceTimebased();
+	
 	vector<VideoDepthPair> & getPairs();
 
   protected:

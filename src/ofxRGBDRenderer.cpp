@@ -10,20 +10,28 @@
 #include "ofxRGBDRenderer.h"
 
 ofxRGBDRenderer::ofxRGBDRenderer(){
-
+	xshift = 0;
+	yshift = 0;
+	xscale = 0;
+	yscale = 0;
 }
 
 ofxRGBDRenderer::~ofxRGBDRenderer(){
 
 }
 
-void ofxRGBDRenderer::setup(string calibrationDirectory){
+bool ofxRGBDRenderer::setup(string calibrationDirectory){
+	if(!ofDirectory(calibrationDirectory).exists()){
+		return false;
+	}
 	
 	depthCalibration.load(calibrationDirectory+"/depthCalib.yml");
 	rgbCalibration.load(calibrationDirectory+"/rgbCalib.yml");
 	
 	loadMat(rotationDepthToRGB, calibrationDirectory+"/rotationDepthToRGB.yml");
 	loadMat(translationDepthToRGB, calibrationDirectory+"/translationDepthToRGB.yml");
+	
+	applyShader = false;
 	
 	/*
 	cout << "rotation is " << rotationDepthToRGB << endl;
@@ -45,13 +53,15 @@ void ofxRGBDRenderer::setup(string calibrationDirectory){
 					"../../../../../addons/ofxRGBDepth/assets/rgbd.geom");
 	rgbdShader.begin();
 	rgbdShader.setUniform1i("externalTexture", 0);
+	rgbdShader.end();
 	
 	mesh.setUsage(GL_STREAM_DRAW);
 	mesh.setMode(OF_PRIMITIVE_TRIANGLES);
 	
 	int w = 640;
-	int h = 240;
+	int h = 480;
 	for(int i = 0; i < w*h; i++) {
+		mesh.addColor(ofFloatColor(0,0,0));
  		mesh.addVertex(ofVec3f(0,0,0));
 		mesh.addTexCoord(ofVec2f(0,0));
 	}
@@ -85,7 +95,7 @@ void ofxRGBDRenderer::setDepthImage(unsigned short* depthPixelsRaw){
 
 void ofxRGBDRenderer::update(){
 	int w = 640;
-	int h = 240;
+	int h = 480;
 	
 	int start = ofGetElapsedTimeMillis();
 	
@@ -111,6 +121,7 @@ void ofxRGBDRenderer::update(){
             float xReal = (((float) x - principalPoint.x) / imageSize.width) * z * fx + xshift;
             float yReal = (((float) y - principalPoint.y) / imageSize.height) * z * fy + yshift;
 			mesh.setVertex(index, ofVec3f(xReal, yReal, z));
+			mesh.setColor(index, z == 0 ? ofFloatColor(0,0,0,0) : ofFloatColor(1,1,1,1));
 			index++;
 		}
 	}
@@ -179,23 +190,26 @@ void ofxRGBDRenderer::drawPointCloud() {
 	glPushMatrix();
 	glScaled(1, -1, 1);
 	
-	currentRGBImage->getTextureReference().bind();
+	//currentRGBImage->getTextureReference().bind();
 	
 	glEnable(GL_DEPTH_TEST);
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-    
+    glEnableClientState(GL_COLOR_ARRAY);
+	
 	glTexCoordPointer(2, GL_FLOAT, sizeof(ofVec2f), &(mesh.getTexCoords()[0].x));
 	glVertexPointer(3, GL_FLOAT, sizeof(ofVec3f), &(mesh.getVertices()[0].x));
-	
+	glColorPointer(4, GL_FLOAT, sizeof(ofFloatColor), &(mesh.getColors()[0].r));
+				   
 	glDrawArrays(GL_POINTS, 0, mesh.getVertices().size());
-    
+	
+    glDisableClientState(GL_COLOR_ARRAY);
     glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 	glDisableClientState(GL_VERTEX_ARRAY);
 	
 	glDisable(GL_DEPTH_TEST);
 	
-	currentRGBImage->getTextureReference().unbind();
+	//currentRGBImage->getTextureReference().unbind();
 	
 	glPopMatrix();
 	

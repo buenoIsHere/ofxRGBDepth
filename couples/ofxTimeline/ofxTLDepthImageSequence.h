@@ -22,6 +22,9 @@ class ofxTLDepthImageSequence : public ofxTLElement {
 	void setup();
 	void draw();
 
+	void enable();
+	void disable();
+
 	vector<ofxTLVideoThumb> videoThumbs;
 
 	virtual void mousePressed(ofMouseEventArgs& args);
@@ -37,8 +40,8 @@ class ofxTLDepthImageSequence : public ofxTLElement {
 
 	virtual void drawRectChanged();
 
-	void loadSequence();
-	void loadSequence(string sequenceDirectory);
+	bool loadSequence();
+	bool loadSequence(string sequenceDirectory);
 
 	void playbackStarted(ofxTLPlaybackEventArgs& args);
 	void playbackEnded(ofxTLPlaybackEventArgs& args);
@@ -49,11 +52,19 @@ class ofxTLDepthImageSequence : public ofxTLElement {
 	unsigned short* thumbnailDepthRaw;
 	
 	int getSelectedFrame();
+	
+	int frameForTime(long timeInMillis);
 	void selectFrame(int frame);
 	void selectTime(float timeInSeconds);
+	void selectTime(long timeStampInMillis);
+	
+	//only works if doFramesHaveMillis is true
+	long getSelectedTimeInMillis();
+	
 	void toggleThumbs();
 	
 	bool doFramesHaveTimestamps();
+
 	
   protected:
 	bool framesHaveTimestamps;

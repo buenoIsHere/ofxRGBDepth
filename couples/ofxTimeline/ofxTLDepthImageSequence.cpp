@@ -31,17 +31,27 @@ ofxTLDepthImageSequence::~ofxTLDepthImageSequence(){
 void ofxTLDepthImageSequence::setup(){
 	
 	enable();
-	ofxTLRegisterPlaybackEvents(this);
 	currentDepthRaw = new unsigned short[640*480];
 	thumbnailDepthRaw = new unsigned short[640*480];
 	currentDepthImage = decoder.convertTo8BitImage(currentDepthRaw);
+}
+
+void ofxTLDepthImageSequence::enable(){
+	ofxTLElement::enable();
+	ofxTLRegisterPlaybackEvents(this);
+
+}
+
+void ofxTLDepthImageSequence::disable(){
+	ofxTLElement::disable();
+	ofxTLRemovePlaybackEvents(this);
 }
 
 void ofxTLDepthImageSequence::update(ofEventArgs& args){
 	//if we are on a timebased timeline and our frames have timestamps
 	//prefer selecting based on the time as we'll get more accurate playback speeds
 	if(!timeline->getIsFrameBased() && framesHaveTimestamps){ 
-		selectTime( timeline->getCurrentTime() );
+		selectTime( timeline->getCurrentTime()*1000 );
 	}
 	else{
 		selectFrame( timeline->getCurrentFrame() );
@@ -145,14 +155,32 @@ void ofxTLDepthImageSequence::selectFrame(int frame){
 	currentDepthImage = decoder.convertTo8BitImage(currentDepthRaw);
 }
 
-void ofxTLDepthImageSequence::selectTime(float timeInSeconds){
-	for(int i = 1; i < videoThumbs.size(); i++){
-		if(videoThumbs[i].timestamp/1000.0 < timeInSeconds){
-			selectFrame(i-1);
-		}
-	}
+void ofxTLDepthImageSequence::selectTime(long timeStampInMillis){
+	selectFrame( frameForTime(timeStampInMillis) );
 }
 
+void ofxTLDepthImageSequence::selectTime(float timeInSeconds){
+	selectFrame( frameForTime(timeInSeconds*1000) );
+}
+
+long ofxTLDepthImageSequence::getSelectedTimeInMillis(){
+	return videoThumbs[selectedFrame].timestamp;
+}
+
+int ofxTLDepthImageSequence::frameForTime(long timeInMillis){
+	
+	if(!framesHaveTimestamps){
+		ofLogError("ofxTLDepthImageSequence -- can't select frame for time if there are no timestamps");
+		return 0;
+	}
+	
+	for(int i = 1; i < videoThumbs.size(); i++){
+		if(videoThumbs[i].timestamp > timeInMillis){
+			return i-1;
+		}
+	}
+	return videoThumbs.size()-1;
+}
 
 void ofxTLDepthImageSequence::mouseReleased(ofMouseEventArgs& args){
 }
@@ -161,18 +189,19 @@ void ofxTLDepthImageSequence::drawRectChanged(){
 	calculateFramePositions();
 }
 
-void ofxTLDepthImageSequence::loadSequence(){
+bool ofxTLDepthImageSequence::loadSequence(){
 	ofFileDialogResult r = ofSystemLoadDialog("Load Depth Sequence Directory", true);
 	if(r.bSuccess){
-		loadSequence(r.getPath());
+		return loadSequence(r.getPath());
 	}
+	return false;
 }
 
-void ofxTLDepthImageSequence::loadSequence(string seqdir){
+bool ofxTLDepthImageSequence::loadSequence(string seqdir){
 	ofDirectory sequenceList(seqdir);
 	if(!sequenceList.exists()){
 		ofLogError("ofxTLDepthImageSequence -- sequence directory " + seqdir + " does not exist!");
-		return;
+		return false;
 	}
 	
 	thumbDirectory = seqdir + "/thumbs";
@@ -180,7 +209,7 @@ void ofxTLDepthImageSequence::loadSequence(string seqdir){
 	if(!thumdir.exists()){
 		if(!thumdir.create(true)){
 			ofLogError("ofxTLDepthImageSequence -- sequence directory " + seqdir + " cannot be created!");
-			return;
+			return false;
 		}
 	}
 	
@@ -228,9 +257,14 @@ void ofxTLDepthImageSequence::loadSequence(string seqdir){
 	calculateFramePositions();
 	generateVideoThumbnails();
 	
+	return true;
+	
 }
 
 void ofxTLDepthImageSequence::calculateFramePositions(){
+	if(timeline == NULL){
+		return;
+	}
 	
 	if(!sequenceLoaded){
 		return;

@@ -15,11 +15,6 @@
 #include "ofxTLVideoPlayer.h"
 #include "ofxRGBDVideoDepthSequence.h"
 
-//typedef struct{
-//	int videoFrame;
-//	int depthFrame;
-//} VideoDepthPair;
-
 class ofxTLVideoDepthAlignmentScrubber : public ofxTLElement {
   public:
 	
@@ -37,15 +32,18 @@ class ofxTLVideoDepthAlignmentScrubber : public ofxTLElement {
 	void load();
 	void save();
 	
-	void addAlignedPair(int videoFrame, int depthFrame);
+	//void addAlignedPair(int videoFrame, int depthFrame);
+	void registerCurrentAlignment();
 	void removeAlignmentPair(int index);
 	
 	vector<VideoDepthPair> & getPairs();
-	
+
 	ofxTLVideoPlayer* videoSequence;
 	ofxTLDepthImageSequence* depthSequence;
+
 	
   protected:
+	
 	
 	ofxRGBDVideoDepthSequence pairSequence;
 	

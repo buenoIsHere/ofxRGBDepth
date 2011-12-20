@@ -25,7 +25,7 @@ class ofxRGBDRenderer {
 	ofxRGBDRenderer();
 	~ofxRGBDRenderer();
 	
-	void setup(string calibrationDirectory);
+	bool setup(string calibrationDirectory);
 	
 	void setRGBTexture(ofBaseHasTexture& rgbTexture); 
 	void setDepthImage(unsigned short* depthPixelsRaw);
