@@ -394,18 +394,7 @@ void ofxRGBDAlignment::recalculateImageDrawRects(){
 }
 
 void ofxRGBDAlignment::keyPressed(ofKeyEventArgs& args){
-	if (args.key == OF_KEY_LEFT) {
-		if(selectedRgbImage != -1){
-			
-		}
-	}
-	else if(args.key == OF_KEY_RIGHT){
-		if(selectedRgbImage != -1 && selectedRgbImage != rgbImages.size()-1){
-			CalibrationImage temp = rgbImages[selectedRgbImage+1];
-			rgbImages[selectedRgbImage+1] = rgbImages[selectedRgbImage];
-			rgbImages[selectedRgbImage] = temp;
-		}
-	}
+	
 }
 
 void ofxRGBDAlignment::keyReleased(ofKeyEventArgs& args){
@@ -426,6 +415,7 @@ void ofxRGBDAlignment::mousePressed(ofMouseEventArgs& args){
 			selectedDepthImage = i;
 			if(i < rgbImages.size()){
 				selectedRgbImage = i;
+				currentRGBImage.setFromPixels( rgbImages[selectedRgbImage].image.getPixelsRef() );
 			}
 			break;
 		}
@@ -435,6 +425,7 @@ void ofxRGBDAlignment::mousePressed(ofMouseEventArgs& args){
 			selectedRgbImage = i;
 			if(i < depthImages.size()){
 				selectedDepthImage = i;
+				currentDepthImage.setFromPixels( depthImages[selectedDepthImage].image.getPixelsRef() );
 			}
 			break;
 		}

@@ -85,5 +85,5 @@ class ofxTLDepthImageSequence : public ofxTLElement {
 	string sequenceDirectory;
 	string thumbDirectory;
 	
-	ofxDepthImageRecorder decoder;
+	ofxDepthImageCompressor decoder;
 };

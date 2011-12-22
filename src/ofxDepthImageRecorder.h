@@ -9,65 +9,71 @@
 
 #pragma once
 #include "ofMain.h"
-
-enum DepthEncodingType{
-	DEPTH_ENCODE_NONE,
-	DEPTH_ENCODE_RAW,
-	DEPTH_ENCODE_PNG
-};
+#include "ofxDepthImageCompressor.h"
 
 typedef struct QueuedFrame {
-	void* pixels;
+	unsigned short* pixels;
 	string directory;
 	string filename;
 	int timestamp;
-	DepthEncodingType encodingType;
 };
 
-class ofxDepthImageRecorder : ofThread {
+//thread classes for callbacks
+class ofxDepthImageRecorder;
+class ofxRGBDRecorderThread : public ofThread {
+public:
+	ofxDepthImageRecorder* delegate;
+	ofxRGBDRecorderThread(ofxDepthImageRecorder* d) : delegate(d){}	
+	void threadedFunction();
+};
+
+class ofxRGBDEncoderThread : public ofThread {
+public:
+	ofxDepthImageRecorder* delegate;
+	ofxRGBDEncoderThread(ofxDepthImageRecorder* d) : delegate(d){}
+	void threadedFunction();	
+};
+
+class ofxDepthImageRecorder {
   public:
 	ofxDepthImageRecorder();
 	~ofxDepthImageRecorder();
 	
-	void setDepthEncodingType(DepthEncodingType type);
 	vector<string> getTakePaths();
 	
-	//ENCODE
 	void setup();
+	
 	void setRecordLocation(string directory, string filePrefix);
 	bool addImage(unsigned short* image);
-	bool addImage(unsigned short* image, unsigned char* auxImage);
-	
-	void incrementFolder();
-	void incrementFolder(ofImage posterFrame); //providing a poster frame saves it in the same directory
-    
-	void saveToCompressedPng(string filename, unsigned short* buf);
 
+	void incrementTake();
+    //start converting the current directory
+	void compressCurrentTake();
+	
+	
 	int numFramesWaitingSave();
+	int recordingStartTime; //in millis -- potentially should make this more accurate
 	
-	//DECODE
-	unsigned short* readDepthFrame(string filename, unsigned short* outbuf = NULL);
-	unsigned short* readDepthFrame(ofFile file, unsigned short*  outbuf = NULL);
-	unsigned short* readCompressedPng(string filename, unsigned short* outbuf = NULL);
-	
-	ofImage readDepthFrametoImage(string filename);
-	ofImage convertTo8BitImage(unsigned short* buf);
-	
-	int recordingStartTime; //in millis should make this more accurate
+	void encoderThreadCallback();
+	void recorderThreadCallback();
 	
   protected:
-	DepthEncodingType encodingType;
+	ofxDepthImageCompressor compressor;
+	ofxRGBDRecorderThread recorderThread;
+	ofxRGBDEncoderThread encoderThread;
+	
 	ofImage compressedDepthImage;
 
+	unsigned short* encodingBuffer;
 	unsigned short* lastFramePixs;
-	void threadedFunction();
 	int folderCount;
     string currentFolderPrefix;
 	string targetDirectory;
 	string targetFilePrefix;
 	int currentFrame;
-	//queue<unsigned short*> saveQueue;
+	
 	queue<QueuedFrame> saveQueue;
-	unsigned char* pngPixs;
-	bool isRecording;
+	queue<string> encodeDirectories;
 };
+
+//Threads
