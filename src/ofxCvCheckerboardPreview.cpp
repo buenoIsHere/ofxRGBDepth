@@ -20,7 +20,6 @@ void ofxCvCheckerboardPreview::setup(int squaresWide, int squaresTall, int squar
 	calib.setSubpixelSize(squareSize);
 	boardLastFoundTime = 0;
 	
-	
 	startThread(true, false);
 
 }

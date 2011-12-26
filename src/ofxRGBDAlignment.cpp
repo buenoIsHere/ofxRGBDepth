@@ -103,7 +103,6 @@ void ofxRGBDAlignment::addDepthCalibrationDirectory(string depthImageDirectory){
 	cout << "found " << dir.numFiles() << " for depth directory " << endl;
 	for(int i = 0; i < dir.numFiles(); i++){
 		addDepthCalibrationImage( dir.getPath(i) );
-		cout << "adding DEPTH image " << dir.getPath(i) << endl;
 	}
 	
 	generateAlignment();

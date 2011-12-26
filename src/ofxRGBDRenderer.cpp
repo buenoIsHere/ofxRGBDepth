@@ -93,6 +93,14 @@ void ofxRGBDRenderer::setDepthImage(unsigned short* depthPixelsRaw){
 	hasDepthImage = true;
 }
 
+Calibration& ofxRGBDRenderer::getDepthCalibration(){
+	return depthCalibration;
+}
+
+Calibration& ofxRGBDRenderer::getRGBCalibration(){
+	return rgbCalibration;
+}
+
 void ofxRGBDRenderer::update(){
 	int w = 640;
 	int h = 480;
@@ -118,8 +126,8 @@ void ofxRGBDRenderer::update(){
 		for(int x = 0; x < w; x++) {
 			
             unsigned short z = currentDepthImage[y*w+x];
-            float xReal = (((float) x - principalPoint.x) / imageSize.width) * z * fx + xshift;
-            float yReal = (((float) y - principalPoint.y) / imageSize.height) * z * fy + yshift;
+            float xReal = (((float) x - principalPoint.x + xshift) / imageSize.width) * z * fx;
+            float yReal = (((float) y - principalPoint.y + yshift) / imageSize.height) * z * fy;
 			mesh.setVertex(index, ofVec3f(xReal, yReal, z));
 			mesh.setColor(index, z == 0 ? ofFloatColor(0,0,0,0) : ofFloatColor(1,1,1,1));
 			index++;

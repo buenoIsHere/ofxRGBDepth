@@ -39,8 +39,8 @@ void ofxDepthImageCompressor::saveToCompressedPng(string filename, unsigned shor
 	if(ofFilePath::getFileExt(filename) != "png"){
 		ofLogError("ofxDepthImageRecorder -- file is not being saved as png: " + filename);
 	}
-	compressedDepthImage.saveImage(filename);
 	
+	compressedDepthImage.saveImage(filename);
 }
 
 unsigned short* ofxDepthImageCompressor::readDepthFrame(string filename, unsigned short* outbuf) {
@@ -58,7 +58,6 @@ unsigned short* ofxDepthImageCompressor::readDepthFrame(ofFile infile,  unsigned
 	infile.close();
 	return outbuf;
 }
-
 
 ofImage ofxDepthImageCompressor::readDepthFrametoImage(string filename){	
 	

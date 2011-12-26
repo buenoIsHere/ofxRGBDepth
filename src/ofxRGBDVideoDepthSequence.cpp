@@ -51,7 +51,6 @@ bool ofxRGBDVideoDepthSequence::loadPairingFile(string pairFileXml){
 			if(p.isTimeBased){
 				p.videoFrame = settings.getValue("videoMillis", 0);
 				p.depthFrame = settings.getValue("depthMillis", 0);
-				
 			}
 			else{
 				p.videoFrame = settings.getValue("video", 0);

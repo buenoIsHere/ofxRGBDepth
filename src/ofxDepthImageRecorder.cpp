@@ -28,6 +28,8 @@ ofxDepthImageRecorder::ofxDepthImageRecorder()
 	encoderThread(this)
 {
 	lastFramePixs = NULL;
+	encodingBuffer = NULL;
+	framesToCompress = 0;
 }
 
 ofxDepthImageRecorder::~ofxDepthImageRecorder(){
@@ -55,6 +57,15 @@ void ofxDepthImageRecorder::setRecordLocation(string directory, string filePrefi
 	}
 	
 	targetFilePrefix = filePrefix;
+	
+	//convert any hanging uncoverted take files
+	vector<string> takePaths = getTakePaths();
+	encoderThread.lock();
+	for(int i = 0; i < takePaths.size(); i++){
+		encodeDirectories.push( takePaths[i] );
+	}
+	encoderThread.unlock();
+	
 }
 
 
@@ -101,6 +112,14 @@ int ofxDepthImageRecorder::numFramesWaitingSave(){
 	return saveQueue.size();
 }
 
+int ofxDepthImageRecorder::numFramesWaitingCompession(){
+	return framesToCompress;
+}
+
+int ofxDepthImageRecorder::numDirectoriesWaitingCompression(){
+	return encodeDirectories.size();
+}
+
 //start converting the current directory
 void ofxDepthImageRecorder::compressCurrentTake(){
 	if(currentFolderPrefix != ""){
@@ -142,25 +161,6 @@ void ofxDepthImageRecorder::recorderThreadCallback(){
 		compressor.saveToRaw(frame.directory+frame.filename, frame.pixels);
 		delete frame.pixels;
 	}
-	
-//            if(frame.encodingType == DEPTH_ENCODE_RAW){
-				
-				//string filename = targetDirectory +  "/" + currentFolderPrefix + "/" + targetFilePrefix + "_" + filenumber +  ".xkcd";
-//				ofFile file(frame.directory + frame.filename, ofFile::WriteOnly, true);
-//				file.write( (char*)&((unsigned short*)frame.pixels)[0], sizeof(unsigned short)*640*480 );					   
-//				file.close();
-				
-
-				
-//			}
-//			else if(encodingType == DEPTH_ENCODE_PNG){
-////				int startTime = ofGetElapsedTimeMillis();
-//				saveToCompressedPng(frame.directory+frame.filename, (unsigned short*)frame.pixels);
-//				delete (unsigned short*)frame.pixels;
-////				cout << "compression took " << ofGetElapsedTimeMillis() - startTime << " Millis " << endl;
-//			}
-
-
 }
 
 void ofxDepthImageRecorder::encoderThreadCallback(){
@@ -179,38 +179,21 @@ void ofxDepthImageRecorder::encoderThreadCallback(){
 		//start to convert
 		ofDirectory rawDir(dir);
 		rawDir.allowExt("raw");
+		rawDir.allowExt("xkcd");
 		rawDir.listDir();
 		if(encodingBuffer == NULL){
 			encodingBuffer = new unsigned short[640*480];
 		}
 		cout << "ofxDepthImageCompressor -- Starting to convert " << rawDir.numFiles() << " in " << dir << endl;
+		framesToCompress = rawDir.numFiles();
 		for(int i = 0; i < rawDir.numFiles(); i++){
 			string path = rawDir.getPath(i);
 			compressor.readDepthFrame(path, encodingBuffer);
 			compressor.saveToCompressedPng(ofFilePath::removeExt(path)+".png", encodingBuffer);
 			rawDir.getFile(i, ofFile::ReadOnly, true).remove();
+			framesToCompress--;
 		}
 	}
 	ofSleepMillis(2);
 }
-
-//void ofxDepthImageRecorder::saveToCompressedPng(string filename, unsigned short* buf){
-//	if(pngPixs == NULL){
-//		pngPixs = new unsigned char[640*480*3];	
-//	}
-//	
-//	for(int i = 0; i < 640*480; i++){
-//		pngPixs[i*3+0] = buf[i] >> 8;
-//		pngPixs[i*3+1] = buf[i];
-//		pngPixs[i*3+2] = 0;
-//	}
-//	compressedDepthImage.setUseTexture(false);
-//	compressedDepthImage.setFromPixels(pngPixs, 640,480, OF_IMAGE_COLOR);
-//	if(ofFilePath::getFileExt(filename) != "png"){
-//		ofLogError("ofxDepthImageRecorder -- file is not being saved as png: " + filename);
-//	}
-//	compressedDepthImage.saveImage(filename);
-//	
-//}
-
 

@@ -49,6 +49,9 @@ class ofxRGBDRenderer {
 	bool applyShader;
 	ofShader rgbdShader;
 
+	Calibration& getRGBCalibration();
+	Calibration& getDepthCalibration();
+	
   protected:
 	
 	Calibration depthCalibration, rgbCalibration;    

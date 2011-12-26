@@ -52,6 +52,9 @@ class ofxDepthImageRecorder {
 	
 	
 	int numFramesWaitingSave();
+	int numFramesWaitingCompession();
+	int numDirectoriesWaitingCompression();
+	
 	int recordingStartTime; //in millis -- potentially should make this more accurate
 	
 	void encoderThreadCallback();
@@ -64,8 +67,11 @@ class ofxDepthImageRecorder {
 	
 	ofImage compressedDepthImage;
 
+	int framesToCompress;
+	
 	unsigned short* encodingBuffer;
 	unsigned short* lastFramePixs;
+	
 	int folderCount;
     string currentFolderPrefix;
 	string targetDirectory;
@@ -75,5 +81,3 @@ class ofxDepthImageRecorder {
 	queue<QueuedFrame> saveQueue;
 	queue<string> encodeDirectories;
 };
-
-//Threads
