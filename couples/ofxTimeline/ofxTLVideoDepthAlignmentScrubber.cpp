@@ -67,7 +67,7 @@ void ofxTLVideoDepthAlignmentScrubber::mousePressed(ofMouseEventArgs& args){
 void ofxTLVideoDepthAlignmentScrubber::mouseMoved(ofMouseEventArgs& args){
 }
 
-void ofxTLVideoDepthAlignmentScrubber::mouseDragged(ofMouseEventArgs& args){
+void ofxTLVideoDepthAlignmentScrubber::mouseDragged(ofMouseEventArgs& args, bool snapped){
 	if(ready() && bounds.inside(args.x, args.y)){
 		selectedPercent = screenXtoNormalizedX(args.x);
 		

@@ -119,7 +119,7 @@ void ofxTLDepthImageSequence::mouseMoved(ofMouseEventArgs& args){
 	ofxTLElement::mouseMoved(args);
 }
 
-void ofxTLDepthImageSequence::mouseDragged(ofMouseEventArgs& args){
+void ofxTLDepthImageSequence::mouseDragged(ofMouseEventArgs& args, bool snapped){
 	if( bounds.inside(args.x, args.y) ){
 		int index = indexForScreenX(args.x, videoThumbs.size());
 		selectFrame(index);
