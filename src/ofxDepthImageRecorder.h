@@ -42,15 +42,13 @@ class ofxDepthImageRecorder {
 	vector<string> getTakePaths();
 	
 	void setup();
+	void toggleRecord();
+	bool isRecording();
 	
 	void setRecordLocation(string directory, string filePrefix);
 	bool addImage(unsigned short* image);
 
-	void incrementTake();
-    //start converting the current directory
-	void compressCurrentTake();
-	
-	
+		
 	int numFramesWaitingSave();
 	int numFramesWaitingCompession();
 	int numDirectoriesWaitingCompression();
@@ -60,7 +58,15 @@ class ofxDepthImageRecorder {
 	void encoderThreadCallback();
 	void recorderThreadCallback();
 	
+
   protected:
+	bool recording;
+	
+	void incrementTake();
+    //start converting the current directory
+	void compressCurrentTake();
+
+	
 	ofxDepthImageCompressor compressor;
 	ofxRGBDRecorderThread recorderThread;
 	ofxRGBDEncoderThread encoderThread;
@@ -71,6 +77,8 @@ class ofxDepthImageRecorder {
 	
 	unsigned short* encodingBuffer;
 	unsigned short* lastFramePixs;
+
+	
 	
 	int folderCount;
     string currentFolderPrefix;

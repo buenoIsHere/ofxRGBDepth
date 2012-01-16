@@ -27,6 +27,7 @@ ofxDepthImageRecorder::ofxDepthImageRecorder()
   : recorderThread(this),
 	encoderThread(this)
 {
+	recording = false;
 	lastFramePixs = NULL;
 	encodingBuffer = NULL;
 	framesToCompress = 0;
@@ -64,10 +65,8 @@ void ofxDepthImageRecorder::setRecordLocation(string directory, string filePrefi
 	for(int i = 0; i < takePaths.size(); i++){
 		encodeDirectories.push( takePaths[i] );
 	}
-	encoderThread.unlock();
-	
+	encoderThread.unlock();	
 }
-
 
 vector<string> ofxDepthImageRecorder::getTakePaths(){
 	ofDirectory dir = ofDirectory(targetDirectory);
@@ -120,6 +119,20 @@ int ofxDepthImageRecorder::numDirectoriesWaitingCompression(){
 	return encodeDirectories.size();
 }
 
+void ofxDepthImageRecorder::toggleRecord(){
+	recording = !recording;
+	if(recording){
+		incrementTake();		
+	}
+	else {
+		compressCurrentTake();
+	}
+}
+
+bool ofxDepthImageRecorder::isRecording(){
+	return recording;
+}
+
 //start converting the current directory
 void ofxDepthImageRecorder::compressCurrentTake(){
 	if(currentFolderPrefix != ""){
@@ -158,8 +171,16 @@ void ofxDepthImageRecorder::recorderThreadCallback(){
 	if(foundFrame){
 		char filenumber[512];
 		sprintf(filenumber, "%05d", currentFrame); 
-		compressor.saveToRaw(frame.directory+frame.filename, frame.pixels);
-		delete frame.pixels;
+		if(compressor.saveToRaw(frame.directory+frame.filename, frame.pixels)){
+			delete frame.pixels;
+		}
+		else {
+			//if the save fils push it back on tehs tack
+			recorderThread.lock();
+			saveQueue.push(frame);
+			recorderThread.unlock();
+			ofLogError("ofxDepthImageRecorder -- Save Failed! readding to queue");
+		}
 	}
 }
 
@@ -187,6 +208,10 @@ void ofxDepthImageRecorder::encoderThreadCallback(){
 		cout << "ofxDepthImageCompressor -- Starting to convert " << rawDir.numFiles() << " in " << dir << endl;
 		framesToCompress = rawDir.numFiles();
 		for(int i = 0; i < rawDir.numFiles(); i++){
+			//don't do this while recording
+			while(recording){
+				ofSleepMillis(250);
+			}
 			string path = rawDir.getPath(i);
 			compressor.readDepthFrame(path, encodingBuffer);
 			compressor.saveToCompressedPng(ofFilePath::removeExt(path)+".png", encodingBuffer);

@@ -95,7 +95,7 @@ void ofxRGBDAlignment::addDepthCalibrationDirectory(string depthImageDirectory){
 	ofDirectory dir(depthImageDirectory);
 	if(!dir.exists()){
 		ofLogError("ofxRGBDAlignment -- RGB Image Directory " + depthImageDirectory + " does not exist");
-		return;
+		return; 
 	}
 	dir.allowExt("png");
 	dir.allowExt("jpg");
@@ -255,6 +255,20 @@ void ofxRGBDAlignment::saveAlignment(string saveDirectory) {
 		saveMat(rotationRGBToDepth, saveDirectory+"/rotationRGBToDepth.yml");
 		saveMat(translationRGBToDepth, saveDirectory+"/translationRGBToDepth.yml");
 
+		//copy across the images used
+		ofDirectory rgbImageOutDir(saveDirectory+"/rgbAlignmentImages");
+		ofDirectory depthImageOutDir(saveDirectory+"/depthAlignmentImages");
+		if(!rgbImageOutDir.exists()) rgbImageOutDir.create(true);
+		if(!depthImageOutDir.exists()) depthImageOutDir.create(true);
+		
+		for(int i = 0; i < rgbImages.size(); i++){
+			//string pathSrc, string pathDst, bool bRelativeToData = true,  bool overwrite = false
+			ofFile::copyFromTo(rgbImages[i].filepath, rgbImageOutDir.getOriginalDirectory(), false, false);
+		}
+		for(int i = 0; i < depthImages.size(); i++){
+			//string pathSrc, string pathDst, bool bRelativeToData = true,  bool overwrite = false
+			ofFile::copyFromTo(depthImages[i].filepath, depthImageOutDir.getOriginalDirectory(), false, false);
+		}
 	}
 	else {
 		ofLogWarning("ofxRGBDAlignment -- Could not save alignment, it's not ready");

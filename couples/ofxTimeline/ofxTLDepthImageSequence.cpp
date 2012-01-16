@@ -221,6 +221,11 @@ bool ofxTLDepthImageSequence::loadSequence(string seqdir){
 	sequenceList.allowExt("png");
 	int numFiles = sequenceList.listDir();
 	bool checkedForTimestamp = false;
+	if(numFiles == 0){
+		ofLogError("ofxTLDepthImageSequence -- sequence directory " + seqdir + " is empty!");
+		return false;
+	}
+	
 	for(int i = 0; i < numFiles; i++){
 		if(sequenceList.getName(i).find("poster") != string::npos){
 			cout << "discarding poster frame " << sequenceList.getPath(i) << endl;

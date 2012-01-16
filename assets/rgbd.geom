@@ -17,12 +17,7 @@ void main() {
 	  for(int i = 0; i < gl_VerticesIn; ++i) {
 		gl_Position = gl_PositionIn[i];
 		gl_FrontColor = gl_FrontColorIn[i];
-		
-		//gl_FrontColor.rgb = vec3((normalz(gl_PositionIn[i].z));
-		
-		//gl_FrontColor.rgb = vec3(dif);
-		//gl_FrontColor.a = 1.0;
-		
+				
 		gl_TexCoord[0] = gl_TexCoordIn[i][0];
 		EmitVertex();
 	  }

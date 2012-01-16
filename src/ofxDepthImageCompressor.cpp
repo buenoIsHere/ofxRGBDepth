@@ -17,10 +17,11 @@ ofxDepthImageCompressor::~ofxDepthImageCompressor(){
 
 }
 
-void ofxDepthImageCompressor::saveToRaw(string filename, unsigned short* buf){
+bool ofxDepthImageCompressor::saveToRaw(string filename, unsigned short* buf){
 	ofFile file(filename, ofFile::WriteOnly, true);
-	file.write( (char*)&(buf)[0], sizeof(unsigned short)*640*480 );					   
+	bool success = file.write( (char*)&(buf)[0], sizeof(unsigned short)*640*480 );
 	file.close();
+	return success;
 }
 
 void ofxDepthImageCompressor::saveToCompressedPng(string filename, unsigned short* buf){

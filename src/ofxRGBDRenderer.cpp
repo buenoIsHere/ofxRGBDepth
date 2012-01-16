@@ -14,6 +14,9 @@ ofxRGBDRenderer::ofxRGBDRenderer(){
 	yshift = 0;
 	xscale = 0;
 	yscale = 0;
+	useDistorted = false;
+	hasDepthImage = false;
+	hasRGBImage = false;
 }
 
 ofxRGBDRenderer::~ofxRGBDRenderer(){
@@ -102,20 +105,33 @@ Calibration& ofxRGBDRenderer::getRGBCalibration(){
 }
 
 void ofxRGBDRenderer::update(){
+	
+	if(!hasDepthImage || !hasRGBImage) return;
+	
 	int w = 640;
 	int h = 480;
 	
 	int start = ofGetElapsedTimeMillis();
-	
-	Point2d fov = depthCalibration.getUndistortedIntrinsics().getFov();
-	
-//	cout << "fov? " << fov.x << " " << fov.y << endl;
+
+//	Mat R1,R2,P1,P2,Q;
+//	stereoRectify(depthCalibration.getDistortedIntrinsics().getCameraMatrix(), depthCalibration.getDistCoeffs(), 
+//				  rgbCalibration.getDistortedIntrinsics().getCameraMatrix(), rgbCalibration.getDistCoeffs(), 
+//				  depthCalibration.getDistortedIntrinsics().getImageSize(), 
+//				  rotationDepthToRGB, translationDepthToRGB, 
+//				  R1, R2, P1, P2, Q);
+//	cout << "distorted image size " << depthCalibration.getDistortedIntrinsics().getImageSize().width << " " << depthCalibration.getDistortedIntrinsics().getImageSize().height << endl;
+//	cout << " Q is " << Q << endl;
+
+	//Point2d fov = depthCalibration.getUndistortedIntrinsics().getFov();
+	Point2d fov = depthCalibration.getDistortedIntrinsics().getFov();
+//	cout << " undistorted fov? " << fov.x << " " << fov.y << " distorted? " << depthCalibration.getDistortedIntrinsics().getFov().x << " " << depthCalibration.getDistortedIntrinsics().getFov().y << endl;
 	
 	float fx = tanf(ofDegToRad(fov.x) / 2) * 2;
 	float fy = tanf(ofDegToRad(fov.y) / 2) * 2;
 	
-	Point2d principalPoint = depthCalibration.getUndistortedIntrinsics().getPrincipalPoint();
-	cv::Size imageSize = depthCalibration.getUndistortedIntrinsics().getImageSize();
+	Point2d principalPoint = depthCalibration.getDistortedIntrinsics().getPrincipalPoint();
+	cv::Size imageSize = depthCalibration.getDistortedIntrinsics().getImageSize();
+	
 //	cout << "principal point " << principalPoint.x << " " << principalPoint.y << endl;
 //	cout << "image size " << imageSize.width << " " << imageSize.height << endl;
 	
@@ -126,19 +142,36 @@ void ofxRGBDRenderer::update(){
 		for(int x = 0; x < w; x++) {
 			
             unsigned short z = currentDepthImage[y*w+x];
-            float xReal = (((float) x - principalPoint.x + xshift) / imageSize.width) * z * fx;
-            float yReal = (((float) y - principalPoint.y + yshift) / imageSize.height) * z * fy;
+            float xReal = (((float) x - principalPoint.x + xshift ) / imageSize.width) * z * fx;
+            float yReal = (((float) y - principalPoint.y + yshift ) / imageSize.height) * z * fy;
 			mesh.setVertex(index, ofVec3f(xReal, yReal, z));
 			mesh.setColor(index, z == 0 ? ofFloatColor(0,0,0,0) : ofFloatColor(1,1,1,1));
 			index++;
+			
 		}
 	}
 	
+	//Mat image = toCv(currentDepthImage);
+	//Mat image = Mat(1, 480*640, CV_16SC1, currentDepthImage, 0);
+	
+//	cout << "Creating image " << image.size().width << endl;
+	
+//	vector<Point3f> outputPoints;
+//	reprojectImageTo3D(image, outputPoints, Q, true);
+
+//	cout << "reprojeted image is " << outputPoints.size() << endl;
+//	for(int i = 0; i < outputPoints.size(); i++){
+//		mesh.setVertex(i, toOf(outputPoints[i]));
+//		//mesh.setColor(i, z == 0 ? ofFloatColor(0,0,0,0) : ofFloatColor(1,1,1,1));
+//		mesh.setColor(i, ofFloatColor(1,1,1,1));
+//		cout << " projection for i " << i << " i s " << outputPoints[i] << endl;
+//	}
+		
 	//cout << "unproject points " << (ofGetElapsedTimeMillis() - start) << endl;
 	start = ofGetElapsedTimeMillis();
 	
 	Mat pcMat = Mat(toCv(mesh));
-	
+//	Mat pcMat = Mat(outputPoints);
 	//cout << "create mesh " << (ofGetElapsedTimeMillis() - start) << endl;
 	start = ofGetElapsedTimeMillis();
 	

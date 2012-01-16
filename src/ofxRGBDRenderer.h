@@ -51,7 +51,7 @@ class ofxRGBDRenderer {
 
 	Calibration& getRGBCalibration();
 	Calibration& getDepthCalibration();
-	
+	bool useDistorted;
   protected:
 	
 	Calibration depthCalibration, rgbCalibration;    
