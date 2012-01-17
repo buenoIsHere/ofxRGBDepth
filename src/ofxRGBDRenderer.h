@@ -29,6 +29,10 @@ class ofxRGBDRenderer {
 	
 	void setRGBTexture(ofBaseHasTexture& rgbTexture); 
 	void setDepthImage(unsigned short* depthPixelsRaw);
+	//used for supplying a preview texture that is smaller than the image was calibrated on.
+	//helps for playback vs rendering
+	void setTextureScale(float xTextureScale, float yTextureScale);
+	
 	void update();
 
 	//fudge factors to apply during alignment
@@ -36,12 +40,12 @@ class ofxRGBDRenderer {
 	float yshift;
 	float xscale;
 	float yscale;
-
+	
 	void drawMesh();
 	void drawPointCloud();
-		
+	
 	//populated with vertices, texture coords, and indeces
-	ofVboMesh & getMesh();
+	ofMesh& getMesh();
 
 	ofVec3f getMeshCenter();
 	float getMeshDistance();
@@ -54,6 +58,9 @@ class ofxRGBDRenderer {
 	bool useDistorted;
   protected:
 	
+	float xTextureScale;
+	float yTextureScale;
+
 	Calibration depthCalibration, rgbCalibration;    
 	Mat rotationDepthToRGB, translationDepthToRGB;
 
@@ -65,7 +72,8 @@ class ofxRGBDRenderer {
 	
 	vector<Point2f> imagePoints;    
 	ofVboMesh mesh;
-    vector<ofIndexType> indeces;
+	ofMesh simpleMesh;
+    vector<ofIndexType> baseIndeces;
     vector<ofVec2f> texcoords;
     vector<ofVec3f> vertices;
 	

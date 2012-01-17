@@ -250,17 +250,21 @@ bool ofxTLDepthImageSequence::loadSequence(string seqdir){
 				}
 			}
 		}
-		
+		 
 		videoThumbs.push_back(t);
 	}
+	
+	cout << "sequence is loaded " << videoThumbs.size() << endl;
 	
 	sequenceLoaded = true;
 	
 	videoThumbs[0].visible = true;
 	
 	generateThumbnailForFrame(0);
+	cout << "calculating frame positions" << endl;
 	calculateFramePositions();
-	generateVideoThumbnails();
+	cout << "generating thumbnails" << endl;
+//	generateVideoThumbnails();
 	
 	return true;
 	

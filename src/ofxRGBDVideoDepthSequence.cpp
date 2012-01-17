@@ -144,10 +144,9 @@ int ofxRGBDVideoDepthSequence::getDepthFrameForVideoFrame(int videoFrame){
 			endIndex--;
 		}
 		
-		
-		cout << "looking for index " << videoFrame << " found to be between " << startIndex << " and " << endIndex << endl;
 		int mapping = ofMap(videoFrame, alignedFrames[startIndex].videoFrame, alignedFrames[endIndex].videoFrame,
 										alignedFrames[startIndex].depthFrame, alignedFrames[endIndex].depthFrame, false);	
+//		cout << "looking for video frame " << videoFrame << " mapped to depth " << mapping << " found to be between " << startIndex << " and " << endIndex <<endl;
 		return mapping;
 	}
 }
