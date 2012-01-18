@@ -222,6 +222,9 @@ ofMesh& ofxRGBDRenderer::getMesh(){
 
 
 void ofxRGBDRenderer::drawMesh() {
+	
+	if(!hasRGBImage || !hasDepthImage) return;
+	
 	glPushMatrix();
 	glScaled(1, -1, 1);
 	
@@ -235,6 +238,8 @@ void ofxRGBDRenderer::drawMesh() {
 }
 
 void ofxRGBDRenderer::drawPointCloud() {
+	
+	if(!hasRGBImage || !hasDepthImage) return;
 	
 	glPushMatrix();
 	glScaled(1, -1, 1);
@@ -250,6 +255,9 @@ void ofxRGBDRenderer::drawPointCloud() {
 }
 
 void ofxRGBDRenderer::drawWireFrame() {
+	
+	if(!hasRGBImage || !hasDepthImage) return;
+	
 	glPushMatrix();
 	glScaled(1, -1, 1);
 	
