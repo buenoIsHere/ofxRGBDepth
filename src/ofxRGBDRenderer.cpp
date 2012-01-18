@@ -23,7 +23,6 @@ ofxRGBDRenderer::ofxRGBDRenderer(){
 	xTextureScale = 1;
 	yTextureScale = 1;
 
-	useDistorted = false;
 	hasDepthImage = false;
 	hasRGBImage = false;
 }
@@ -67,17 +66,17 @@ bool ofxRGBDRenderer::setup(string calibrationDirectory){
 	rgbdShader.setUniform1i("externalTexture", 0);
 	rgbdShader.end();
 	
-	mesh.setUsage(GL_STREAM_DRAW);
-	mesh.setMode(OF_PRIMITIVE_TRIANGLES);
+//	mesh.setUsage(GL_STREAM_DRAW);
+//	mesh.setMode(OF_PRIMITIVE_TRIANGLES);
 	
 	int w = 640;
 	int h = 480;
 	
-	for(int i = 0; i < w*h; i++) {
-		mesh.addColor(ofFloatColor(0,0,0));
- 		mesh.addVertex(ofVec3f(0,0,0));
-		mesh.addTexCoord(ofVec2f(0,0));
-	}
+//	for(int i = 0; i < w*h; i++) {
+//		mesh.addColor(ofFloatColor(0,0,0));
+// 		mesh.addVertex(ofVec3f(0,0,0));
+//		mesh.addTexCoord(ofVec2f(0,0));
+//	}
 	
 	for (int y = 0; y < h-1; y++){
 		for (int x=0; x < w-1; x++){
@@ -88,7 +87,7 @@ bool ofxRGBDRenderer::setup(string calibrationDirectory){
 			baseIndeces.push_back(a);
 			baseIndeces.push_back(b);
 			baseIndeces.push_back(c);
-			mesh.addTriangle(a, b, c);
+//			mesh.addTriangle(a, b, c);
 			
 			a = (x+1)+y*w;
 			b = x+(y+1)*w;
@@ -96,7 +95,7 @@ bool ofxRGBDRenderer::setup(string calibrationDirectory){
 			baseIndeces.push_back(a);
 			baseIndeces.push_back(b);
 			baseIndeces.push_back(c);			
-			mesh.addTriangle(a, b, c);
+//			mesh.addTriangle(a, b, c);
 		}
 	}		
 }
@@ -129,7 +128,7 @@ void ofxRGBDRenderer::update(){
 	
 	if(!hasDepthImage || !hasRGBImage) return;
 	
-	bool debug = true;
+	bool debug = false;
 	
 	int w = 640;
 	int h = 480;
@@ -144,14 +143,6 @@ void ofxRGBDRenderer::update(){
 	Point2d principalPoint = depthCalibration.getDistortedIntrinsics().getPrincipalPoint();
 	cv::Size imageSize = depthCalibration.getDistortedIntrinsics().getImageSize();
 		
-//	int validPointCount = 0;
-//	ofVec3f center(0,0,0);
-//	vector<bool> validPoints;
-	
-//	int index = 0;
-//	mesh.clearColors();
-//	mesh.clearVertices();
-//	vector<bool> validpoints;
 	vector<IndexMap> indexMap;
 	simpleMesh.clearVertices();
 	
@@ -169,25 +160,14 @@ void ofxRGBDRenderer::update(){
 				indx.vertexIndex = simpleMesh.getVertices().size();
 				indx.valid = true;
 				simpleMesh.addVertex(ofVec3f(xReal, yReal, z));
-//				validpoints.push_back(true);
-				
-//				mesh.setVertex(imageIndex, ofVec3f(xReal, yReal, z));
-//				mesh.setColor(imageIndex, ofFloatColor(1,1,1,1));
-				
-//				indexToVertex[imageIndex] = vertexIndex++;
-//				validPoints.push_back( true );
 			}
 			else {
-//				validpoints.push_back(false);
 				indx.valid = false;
-//				mesh.setVertex(imageIndex, ofVec3f(0,0,0));
-//				mesh.setColor(imageIndex, ofFloatColor(0,0,0,0));
-				//validPoints.push_back( false );
 			}
 			indexMap.push_back( indx );
 		}
 	}
-	if(debug) cout << "un projection took " << ofGetElapsedTimeMillis() - start << " to add " << mesh.getVertices().size() << endl;
+	if(debug) cout << "un projection took " << ofGetElapsedTimeMillis() - start << endl;
 
 	
 	start = ofGetElapsedTimeMillis();
@@ -210,36 +190,7 @@ void ofxRGBDRenderer::update(){
 	
 	if(debug) cout << "project points " << (ofGetElapsedTimeMillis() - start) << endl;
 	
-//	start = ofGetElapsedTimeMillis();
-//	mesh.clearTexCoords();
-//	for(int i = 0; i < imagePoints.size(); i++) {
-//		ofVec2f textureCoord = ofVec2f(imagePoints[i].x * xTextureScale, imagePoints[i].y * yTextureScale);
-//		mesh.addTexCoord(textureCoord);
-//	}
-//	
 
-//	start = ofGetElapsedTimeMillis();	
-//	mesh.clearIndices();
-//	for (int y = 0; y < h-1; y++){
-//		for (int x=0; x < w-1; x++){
-//			ofIndexType a,b,c;
-//			a = x+y*w;
-//			b = (x+1)+y*w;
-//			c = x+(y+1)*w;
-//			if(validPoints[a] && validPoints[b] && validPoints[c]){
-//				mesh.addTriangle(indexToVertex[a], indexToVertex[b], indexToVertex[c]);
-//			}
-//			
-//			a = (x+1)+y*w;
-//			b = x+(y+1)*w;
-//			c = (x+1)+(y+1)*w;
-//			if(validPoints[a] && validPoints[b] && validPoints[c]){
-//				mesh.addTriangle(indexToVertex[a], indexToVertex[b], indexToVertex[c]);
-//			}
-//		}
-//	}
-//	cout << "gen indeces took " << (ofGetElapsedTimeMillis() - start ) << endl;
-	
 	start = ofGetElapsedTimeMillis();
 	simpleMesh.clearIndices();
 	for(int i = 0; i < baseIndeces.size(); i+=3){
@@ -252,7 +203,7 @@ void ofxRGBDRenderer::update(){
 		}
 	}
 	
-	if(debug) cout << "reindexing took " << ofGetElapsedTimeMillis() - start << " to add " << mesh.getVertices().size() << endl;
+	if(debug) cout << "reindexing took " << ofGetElapsedTimeMillis() - start << endl;
 	
 	start = ofGetElapsedTimeMillis();
 	simpleMesh.clearTexCoords();
@@ -269,13 +220,6 @@ ofMesh& ofxRGBDRenderer::getMesh(){
 	return simpleMesh;
 }
 
-ofVec3f ofxRGBDRenderer::getMeshCenter(){
-	return meshCenter;
-}
-
-float ofxRGBDRenderer::getMeshDistance(){
-	return meshDistance;
-}
 
 void ofxRGBDRenderer::drawMesh() {
 	glPushMatrix();
@@ -283,7 +227,7 @@ void ofxRGBDRenderer::drawMesh() {
 	
 	glEnable(GL_DEPTH_TEST);
 	currentRGBImage->getTextureReference().bind();
-	mesh.drawFaces();
+	simpleMesh.drawFaces();
 	currentRGBImage->getTextureReference().unbind();
 	glDisable(GL_DEPTH_TEST);
 	
@@ -292,36 +236,29 @@ void ofxRGBDRenderer::drawMesh() {
 
 void ofxRGBDRenderer::drawPointCloud() {
 	
-	ofPushStyle();
-	
-	ofSetColor(255);
-	glPointSize(2);
-    
 	glPushMatrix();
-//	glScaled(1, -1, 1);
-	
-	//currentRGBImage->getTextureReference().bind();
+	glScaled(1, -1, 1);
 	
 	glEnable(GL_DEPTH_TEST);
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-//    glEnableClientState(GL_COLOR_ARRAY);
-	
-	glTexCoordPointer(2, GL_FLOAT, sizeof(ofVec2f), &(simpleMesh.getTexCoords()[0].x));
-	glVertexPointer(3, GL_FLOAT, sizeof(ofVec3f), &(simpleMesh.getVertices()[0].x));
-//	glColorPointer(4, GL_FLOAT, sizeof(ofFloatColor), &(mesh.getColors()[0].r));
-				   
-	glDrawArrays(GL_POINTS, 0, simpleMesh.getVertices().size());
-	
-    glDisableClientState(GL_COLOR_ARRAY);
-    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-	glDisableClientState(GL_VERTEX_ARRAY);
-	
+	currentRGBImage->getTextureReference().bind();
+	simpleMesh.drawVertices();
+	currentRGBImage->getTextureReference().unbind();
 	glDisable(GL_DEPTH_TEST);
-	
-	//currentRGBImage->getTextureReference().unbind();
 	
 	glPopMatrix();
 	
-	ofPopStyle();
+}
+
+void ofxRGBDRenderer::drawWireFrame() {
+	glPushMatrix();
+	glScaled(1, -1, 1);
+	
+	glEnable(GL_DEPTH_TEST);
+	currentRGBImage->getTextureReference().bind();
+	simpleMesh.drawWireframe();
+	currentRGBImage->getTextureReference().unbind();
+	glDisable(GL_DEPTH_TEST);
+	
+	glPopMatrix();
+	
 }

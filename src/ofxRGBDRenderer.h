@@ -43,19 +43,16 @@ class ofxRGBDRenderer {
 	
 	void drawMesh();
 	void drawPointCloud();
+	void drawWireFrame();
 	
 	//populated with vertices, texture coords, and indeces
 	ofMesh& getMesh();
-
-	ofVec3f getMeshCenter();
-	float getMeshDistance();
 	
 	bool applyShader;
 	ofShader rgbdShader;
 
 	Calibration& getRGBCalibration();
 	Calibration& getDepthCalibration();
-	bool useDistorted;
   protected:
 	
 	float xTextureScale;
@@ -71,7 +68,6 @@ class ofxRGBDRenderer {
 	unsigned short* currentDepthImage;
 	
 	vector<Point2f> imagePoints;    
-	ofVboMesh mesh;
 	ofMesh simpleMesh;
     vector<ofIndexType> baseIndeces;
     vector<ofVec2f> texcoords;

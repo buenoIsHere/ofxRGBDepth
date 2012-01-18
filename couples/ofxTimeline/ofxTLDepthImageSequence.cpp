@@ -265,9 +265,7 @@ bool ofxTLDepthImageSequence::loadSequence(string seqdir){
 	calculateFramePositions();
 	cout << "generating thumbnails" << endl;
 //	generateVideoThumbnails();
-	
 	return true;
-	
 }
 
 void ofxTLDepthImageSequence::calculateFramePositions(){
