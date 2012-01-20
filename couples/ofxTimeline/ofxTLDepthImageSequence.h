@@ -12,7 +12,7 @@
 #include "ofMain.h"
 #include "ofxTLElement.h"
 #include "ofxTLVideoThumb.h"
-#include "ofxDepthImageRecorder.h"
+#include "ofxDepthImageCompressor.h"
 
 class ofxTLDepthImageSequence : public ofxTLElement {
   public:	
@@ -42,7 +42,8 @@ class ofxTLDepthImageSequence : public ofxTLElement {
 
 	bool loadSequence();
 	bool loadSequence(string sequenceDirectory);
-
+	bool isLoaded();
+	
 	void playbackStarted(ofxTLPlaybackEventArgs& args);
 	void playbackEnded(ofxTLPlaybackEventArgs& args);
 	void playbackLooped(ofxTLPlaybackEventArgs& args);

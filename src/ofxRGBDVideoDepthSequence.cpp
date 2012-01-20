@@ -25,6 +25,7 @@ void ofxRGBDVideoDepthSequence::savePairingFile(string pairFileXml){
 	for(int i = 0; i < alignedFrames.size(); i++){
 		settings.addTag("pair");
 		settings.pushTag("pair", i);
+		cout << "RGBD VIDEO DEPTH ALIGN adding pair " << i << endl;
 		if(alignedFrames[i].isTimeBased){
 			settings.addValue("videoMillis", alignedFrames[i].videoFrame);
 			settings.addValue("depthMillis", alignedFrames[i].depthFrame);

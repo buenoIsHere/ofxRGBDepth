@@ -197,6 +197,10 @@ bool ofxTLDepthImageSequence::loadSequence(){
 	return false;
 }
 
+bool ofxTLDepthImageSequence::isLoaded(){
+	return sequenceLoaded;
+}
+
 bool ofxTLDepthImageSequence::loadSequence(string seqdir){
 	ofDirectory sequenceList(seqdir);
 	if(!sequenceList.exists()){
