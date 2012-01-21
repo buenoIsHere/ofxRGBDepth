@@ -32,6 +32,8 @@ class ofxTLVideoDepthAlignmentScrubber : public ofxTLElement {
 	void load();
 	void save();
 	
+	bool ready();
+	
 	//void addAlignedPair(int videoFrame, int depthFrame);
 	void registerCurrentAlignment();
 	void removeAlignmentPair(int index);
@@ -40,14 +42,13 @@ class ofxTLVideoDepthAlignmentScrubber : public ofxTLElement {
 
 	ofxTLVideoPlayer* videoSequence;
 	ofxTLDepthImageSequence* depthSequence;
-
+	
+	void selectPercent(float percent);
 	
   protected:
-	
-	
 	ofxRGBDVideoDepthSequence pairSequence;
-	
-	bool ready();
+	void updateSelection();
+
 	int selectedVideoFrame;
 	int selectedDepthFrame;
 	int selectedPercent;

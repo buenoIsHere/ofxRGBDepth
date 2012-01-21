@@ -61,6 +61,11 @@ void ofxTLVideoDepthAlignmentScrubber::draw(){
 	ofPopStyle();
 }
 
+void ofxTLVideoDepthAlignmentScrubber::selectPercent(float percent){
+	selectedPercent = percent;
+	selectedVideoFrame = normalizedXtoScreenX(percent, zoomBounds);
+}
+
 void ofxTLVideoDepthAlignmentScrubber::mousePressed(ofMouseEventArgs& args){
 }
 
@@ -70,18 +75,22 @@ void ofxTLVideoDepthAlignmentScrubber::mouseMoved(ofMouseEventArgs& args){
 void ofxTLVideoDepthAlignmentScrubber::mouseDragged(ofMouseEventArgs& args, bool snapped){
 	if(ready() && bounds.inside(args.x, args.y)){
 		selectedPercent = screenXtoNormalizedX(args.x);
-		
 		selectedVideoFrame = indexForScreenX(args.x);
-		videoSequence->selectFrame(selectedVideoFrame);
-		if(depthSequence->doFramesHaveTimestamps()){
-			long selectedVideoTime = 1000*videoSequence->getCurrentTime();
-			selectedDepthFrame = depthSequence->frameForTime( pairSequence.getDepthFrameForVideoFrame(selectedVideoTime) );
-			depthSequence->selectFrame(selectedDepthFrame);
-		}
-		else{
-			selectedDepthFrame = pairSequence.getDepthFrameForVideoFrame(selectedVideoFrame);
-			depthSequence->selectFrame(selectedDepthFrame);
-		}
+		updateSelection();
+	}
+}
+
+void ofxTLVideoDepthAlignmentScrubber::updateSelection(){
+
+	videoSequence->selectFrame(selectedVideoFrame);
+	if(depthSequence->doFramesHaveTimestamps()){
+		long selectedVideoTime = 1000*videoSequence->getCurrentTime();
+		selectedDepthFrame = depthSequence->frameForTime( pairSequence.getDepthFrameForVideoFrame(selectedVideoTime) );
+		depthSequence->selectFrame(selectedDepthFrame);
+	}
+	else{
+		selectedDepthFrame = pairSequence.getDepthFrameForVideoFrame(selectedVideoFrame);
+		depthSequence->selectFrame(selectedDepthFrame);
 	}
 }
 
