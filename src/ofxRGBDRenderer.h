@@ -16,6 +16,7 @@
 #pragma once
 #include "ofMain.h"
 #include "ofxCv.h"
+#include "ofRange.h"
 
 using namespace ofxCv;
 using namespace cv;
@@ -41,6 +42,15 @@ class ofxRGBDRenderer {
 	float yshift;
 	float xscale;
 	float yscale;
+	float edgeCull;
+//	ofRange zThreshold;
+	float farClip;
+	
+	//sets a level of simplification, 
+	//should be either 1 for none
+	//2 for half, or 4 for quarter;
+	void setSimplification(int level);
+	int getSimplification();
 	
 	void drawMesh();
 	void drawPointCloud();
@@ -54,6 +64,9 @@ class ofxRGBDRenderer {
 	Calibration& getRGBCalibration();
 	Calibration& getDepthCalibration();
   protected:
+	
+	int simplify;
+
 	
 	float xTextureScale;
 	float yTextureScale;

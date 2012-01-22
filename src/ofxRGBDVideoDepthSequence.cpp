@@ -108,7 +108,6 @@ void ofxRGBDVideoDepthSequence::removeAlignedPair(int index){
 bool ofxRGBDVideoDepthSequence::ready(){
 	return (alignedFrames.size() > 0 &&  alignedFrames[0].isTimeBased) ||
 		   (alignedFrames.size() > 1 && !alignedFrames[0].isTimeBased);
-	;
 }
 
 int ofxRGBDVideoDepthSequence::getDepthFrameForVideoFrame(int videoFrame){
@@ -120,7 +119,7 @@ int ofxRGBDVideoDepthSequence::getDepthFrameForVideoFrame(int videoFrame){
 	if(alignedFrames[0].isTimeBased){
 		return (alignedFrames[0].depthFrame - alignedFrames[0].videoFrame) + videoFrame;
 	}
-	else{
+	else {
 		
 		int startIndex, endIndex;
 		if(videoFrame < alignedFrames[0].videoFrame){

@@ -8,6 +8,7 @@
  */
 
 #include "ofxRGBDRenderer.h"
+#include <set>
 
 typedef struct{
 	int vertexIndex;
@@ -20,11 +21,17 @@ ofxRGBDRenderer::ofxRGBDRenderer(){
 	xscale = 1;
 	yscale = 1;
 	
+	edgeCull = 4000;
+	simplify = 1;
+	
 	xTextureScale = 1;
 	yTextureScale = 1;
 
 	hasDepthImage = false;
 	hasRGBImage = false;
+
+	farClip = 5000;
+//	zThreshold = ofRange(1, 5000);
 }
 
 ofxRGBDRenderer::~ofxRGBDRenderer(){
@@ -45,41 +52,22 @@ bool ofxRGBDRenderer::setup(string calibrationDirectory){
 	
 	loadMat(rotationDepthToRGB, calibrationDirectory+"/rotationDepthToRGB.yml");
 	loadMat(translationDepthToRGB, calibrationDirectory+"/translationDepthToRGB.yml");
-		
-	/*
-	cout << "rotation is " << rotationDepthToRGB << endl;
-	cout << "translation is " << translationDepthToRGB << endl;
 	
-	cout << "rgb cam matrix " << rgbCalibration.getDistortedIntrinsics().getCameraMatrix() << endl;
-	cout << "rgb cam dist coef " << rgbCalibration.getDistCoeffs() << endl;
+	setSimplification(1);
+}
 
-	cout << "depth cam matrix " << depthCalibration.getDistortedIntrinsics().getCameraMatrix() << endl;
-	cout << "depth cam dist coef " << depthCalibration.getDistCoeffs() << endl;
-	 */
+void ofxRGBDRenderer::setSimplification(int level){
+	simplify = level;
+	if (simplify < 0) {
+		simplify = 1;
+	}
+	else if(simplify > 4){
+		simplify == 4;
+	}
 	
-	//bin -> appname -> category -> apps -> of
-//	rgbdShader.setGeometryInputType(GL_TRIANGLES); 
-//	rgbdShader.setGeometryOutputType(GL_TRIANGLE_STRIP);
-//	rgbdShader.setGeometryOutputCount(6);
-//	rgbdShader.load("../../../../../addons/ofxRGBDepth/assets/rgbd.vert",
-//					"../../../../../addons/ofxRGBDepth/assets/rgbd.frag",
-//					"../../../../../addons/ofxRGBDepth/assets/rgbd.geom");
-//	rgbdShader.begin();
-//	rgbdShader.setUniform1i("externalTexture", 0);
-//	rgbdShader.end();
-	
-//	mesh.setUsage(GL_STREAM_DRAW);
-//	mesh.setMode(OF_PRIMITIVE_TRIANGLES);
-	
-	int w = 640;
-	int h = 480;
-	
-//	for(int i = 0; i < w*h; i++) {
-//		mesh.addColor(ofFloatColor(0,0,0));
-// 		mesh.addVertex(ofVec3f(0,0,0));
-//		mesh.addTexCoord(ofVec2f(0,0));
-//	}
-	
+	baseIndeces.clear();
+	int w = 640 / simplify;
+	int h = 480 / simplify;
 	for (int y = 0; y < h-1; y++){
 		for (int x=0; x < w-1; x++){
 			ofIndexType a,b,c;
@@ -97,8 +85,12 @@ bool ofxRGBDRenderer::setup(string calibrationDirectory){
 			baseIndeces.push_back(b);
 			baseIndeces.push_back(c);			
 		}
-	}	
+	}		
+}
 
+//-----------------------------------------------
+int ofxRGBDRenderer::getSimplification(){
+	return simplify;
 }
 
 //-----------------------------------------------
@@ -147,18 +139,21 @@ void ofxRGBDRenderer::update(){
 		
 	vector<IndexMap> indexMap;
 	simpleMesh.clearVertices();
+	simpleMesh.clearIndices();
+	simpleMesh.clearTexCoords();
+	simpleMesh.clearNormals();
 	
 	int imageIndex = 0;
 	int vertexIndex = 0;
-	for(int y = 0; y < h; y++) {
-		for(int x = 0; x < w; x++) {
-			
+	
+	for(int y = 0; y < h; y+= simplify) {
+		for(int x = 0; x < w; x+= simplify) {
+
             unsigned short z = currentDepthImage[y*w+x];
 			IndexMap indx;
-			if(z != 0){
+			if(z != 0 && z < farClip){
 				float xReal = (((float) x - principalPoint.x + xshift ) / imageSize.width) * z * fx;
 				float yReal = (((float) y - principalPoint.y + yshift ) / imageSize.height) * z * fy;
-				
 				indx.vertexIndex = simpleMesh.getVertices().size();
 				indx.valid = true;
 				simpleMesh.addVertex(ofVec3f(xReal, yReal, z));
@@ -171,17 +166,38 @@ void ofxRGBDRenderer::update(){
 	}
 	if(debug) cout << "unprojection " << simpleMesh.getVertices().size() << " took " << ofGetElapsedTimeMillis() - start << endl;
 
+	if(simpleMesh.getVertices().size()  < 3){
+		return;
+	}
+	
+	set<ofIndexType> calculatedNormals;
 	start = ofGetElapsedTimeMillis();
-	simpleMesh.clearIndices();
+	simpleMesh.getNormals().resize(simpleMesh.getVertices().size());
+	
 	for(int i = 0; i < baseIndeces.size(); i+=3){
+		
 		if(indexMap[baseIndeces[i]].valid &&
 		   indexMap[baseIndeces[i+1]].valid &&
 		   indexMap[baseIndeces[i+2]].valid){
-			simpleMesh.addTriangle(indexMap[baseIndeces[i]].vertexIndex, 
-								   indexMap[baseIndeces[i+1]].vertexIndex,
-								   indexMap[baseIndeces[i+2]].vertexIndex);
+			
+			ofVec3f a,b,c;
+			a = simpleMesh.getVertices()[indexMap[baseIndeces[i]].vertexIndex]; 
+			b = simpleMesh.getVertices()[indexMap[baseIndeces[i+1]].vertexIndex]; 
+			c = simpleMesh.getVertices()[indexMap[baseIndeces[i+2]].vertexIndex]; 
+			if(fabs(a.z - b.z) < edgeCull && fabs(a.z - c.z) < edgeCull){
+				simpleMesh.addTriangle(indexMap[baseIndeces[i]].vertexIndex, 
+									   indexMap[baseIndeces[i+1]].vertexIndex,
+									   indexMap[baseIndeces[i+2]].vertexIndex);
+				
+				if(calculatedNormals.find(indexMap[baseIndeces[i]].vertexIndex) == calculatedNormals.end()){
+					//calculate normal
+					simpleMesh.setNormal(indexMap[baseIndeces[i]].vertexIndex, (b-a).getCrossed(b-c).getNormalized());
+					calculatedNormals.insert(indexMap[baseIndeces[i]].vertexIndex);
+				}
+			}
 		}
 	}
+
 
 	if(debug) cout << "indexing  " << simpleMesh.getIndices().size() << " took " << ofGetElapsedTimeMillis() - start << endl;
 
@@ -207,7 +223,6 @@ void ofxRGBDRenderer::update(){
 		if(debug) cout << "project points " << (ofGetElapsedTimeMillis() - start) << endl;
 		
 		start = ofGetElapsedTimeMillis();
-		simpleMesh.clearTexCoords();
 		for(int i = 0; i < imagePoints.size(); i++) {
 			ofVec2f textureCoord = ofVec2f(imagePoints[i].x * xTextureScale, imagePoints[i].y * yTextureScale);
 			simpleMesh.addTexCoord(textureCoord);
