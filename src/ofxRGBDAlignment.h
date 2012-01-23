@@ -88,6 +88,8 @@ class ofxRGBDAlignment {
 	void mousePressed(ofMouseEventArgs& args);
 	void mouseReleased(ofMouseEventArgs& args);
 
+	void copyImagesToDirectory(string dir);
+	
   protected:
 	
 	string stateFilePath;

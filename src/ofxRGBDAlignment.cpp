@@ -235,6 +235,13 @@ bool ofxRGBDAlignment::generateAlignment(){
 	return ready();
 }
 
+void ofxRGBDAlignment::copyImagesToDirectory(string dir){
+	for(int i = 0; i < depthImages.size(); i++){
+		cout << depthImages[i].filepath << endl;
+		depthImages[i].image.saveImage(dir + "/depth_calib_save_" + ofToString(i) + ".png");
+	}
+}
+
 bool ofxRGBDAlignment::ready(){
 	return depthCalibration.isReady() && rgbCalibration.isReady();
 }
