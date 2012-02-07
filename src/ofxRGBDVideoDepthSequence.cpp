@@ -44,7 +44,7 @@ bool ofxRGBDVideoDepthSequence::loadPairingFile(string pairFileXml){
 	
 	ofxXmlSettings settings;
 	if(settings.loadFile(pairFileXml)){
-		alignedFrames.clear();
+		alignedFrames.clear();//AP: Fixed bug loading new comp! 
 		int numPairs = settings.getNumTags("pair");
 		for(int i = 0; i < numPairs; i++){
 			settings.pushTag("pair", i);

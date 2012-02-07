@@ -159,8 +159,8 @@ void ofxRGBDRenderer::update(){
             unsigned short z = currentDepthImage[y*w+x];
 			IndexMap indx;
 			if(z != 0 && z < farClip){
-				float xReal = (((float) x - principalPoint.x + xmult ) / imageSize.width) * z * fx + xshift /* * xscale*/;
-				float yReal = (((float) y - principalPoint.y + ymult ) / imageSize.height) * z * fy + yshift  /* * yscale*/;
+				float xReal = (((float) x - principalPoint.x + xmult ) / imageSize.width) * z * fx/* + xshift*/;
+				float yReal = (((float) y - principalPoint.y + ymult ) / imageSize.height) * z * fy/* + yshift*/;
 				indx.vertexIndex = simpleMesh.getVertices().size();
 				indx.valid = true;
 				ofVec3f pt = ofVec3f(xReal, yReal, z);
