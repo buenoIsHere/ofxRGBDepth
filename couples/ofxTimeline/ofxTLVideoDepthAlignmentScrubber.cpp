@@ -8,13 +8,12 @@
  */
 
 #include "ofxTLVideoDepthAlignmentScrubber.h"
-//bool pairsort(VideoDepthPair frameA, VideoDepthPair frameB){
-//	return frameA.videoFrame < frameB.videoFrame;
-//}
+#include "ofxTimeline.h"
 
 ofxTLVideoDepthAlignmentScrubber::ofxTLVideoDepthAlignmentScrubber(){
 	videoSequence = NULL;
 	depthSequence = NULL;
+	selectedPairIndex = -1;
 }
 
 ofxTLVideoDepthAlignmentScrubber::~ofxTLVideoDepthAlignmentScrubber(){
@@ -36,7 +35,6 @@ void ofxTLVideoDepthAlignmentScrubber::draw(){
 	}
 		
 	ofPushStyle();
-	ofSetColor(255, 100, 0);
 	vector<VideoDepthPair> & alignedFrames = pairSequence.getPairs();
 	for(int i = 0; i < alignedFrames.size(); i++){
 		int videoFrame;
@@ -47,6 +45,13 @@ void ofxTLVideoDepthAlignmentScrubber::draw(){
 			videoFrame = alignedFrames[i].videoFrame;
 		}
 		int screenX = screenXForIndex( videoFrame );
+		if(i == selectedPairIndex){
+			ofSetColor(timeline->getColors().textColor);
+		}
+		else{
+			ofSetColor(timeline->getColors().highlightColor);
+		}
+		
 		ofLine(screenX, bounds.y, screenX, bounds.y+bounds.height);
 		ofDrawBitmapString("video: " + ofToString(alignedFrames[i].videoFrame), ofPoint(screenX+10, bounds.y+15));
 		ofDrawBitmapString("depth: " + ofToString(alignedFrames[i].depthFrame), ofPoint(screenX+10, bounds.y+35));
@@ -66,7 +71,33 @@ void ofxTLVideoDepthAlignmentScrubber::selectPercent(float percent){
 	selectedVideoFrame = normalizedXtoScreenX(percent, zoomBounds);
 }
 
+void ofxTLVideoDepthAlignmentScrubber::keyPressed(ofKeyEventArgs& args){
+	if(args.key == OF_KEY_DEL || args.key == OF_KEY_BACKSPACE ){
+		if(selectedPairIndex != -1){
+			removeAlignmentPair(selectedPairIndex);
+			selectedPairIndex = -1;
+		}
+	}
+}
+
 void ofxTLVideoDepthAlignmentScrubber::mousePressed(ofMouseEventArgs& args){
+	vector<VideoDepthPair> & alignedFrames = pairSequence.getPairs();
+	for(int i = 0; i < alignedFrames.size(); i++){
+		int videoFrame;
+		if(depthSequence->doFramesHaveTimestamps()){
+			videoFrame = videoSequence->getPlayer().getTotalNumFrames() * alignedFrames[i].videoFrame / (videoSequence->getPlayer().getDuration()*1000.0);
+		}
+		else{
+			videoFrame = alignedFrames[i].videoFrame;
+		}
+		int screenX = screenXForIndex( videoFrame );
+		if(abs(args.x - screenX) < 5){
+			selectedPairIndex = i;
+			return;;
+		}
+	}
+	
+	selectedPairIndex = -1;
 }
 
 void ofxTLVideoDepthAlignmentScrubber::mouseMoved(ofMouseEventArgs& args){
@@ -119,7 +150,6 @@ void ofxTLVideoDepthAlignmentScrubber::registerCurrentAlignment(){
 void ofxTLVideoDepthAlignmentScrubber::removeAlignmentPair(int index){
 	
 	pairSequence.removeAlignedPair(index);
-	
 	save();
 }
 
@@ -144,6 +174,10 @@ void ofxTLVideoDepthAlignmentScrubber::load(){
 
 vector<VideoDepthPair> & ofxTLVideoDepthAlignmentScrubber::getPairs(){
 	return pairSequence.getPairs();
+}
+
+ofxRGBDVideoDepthSequence& ofxTLVideoDepthAlignmentScrubber::getPairSequence(){
+	return pairSequence;
 }
 
 bool ofxTLVideoDepthAlignmentScrubber::ready(){

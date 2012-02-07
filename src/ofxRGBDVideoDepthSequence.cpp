@@ -69,7 +69,6 @@ bool ofxRGBDVideoDepthSequence::loadPairingFile(string pairFileXml){
 	}	
 }
 
-
 void ofxRGBDVideoDepthSequence::addAlignedFrames(int videoFrame, int depthFrame){
 	VideoDepthPair pair;
 	pair.isTimeBased = false;

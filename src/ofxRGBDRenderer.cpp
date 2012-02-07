@@ -16,13 +16,18 @@ typedef struct{
 } IndexMap;
 
 ofxRGBDRenderer::ofxRGBDRenderer(){
+	//come up with better names
 	xshift = 0;
 	yshift = 0;
+	xmult = 0;
+	ymult = 0;
 	xscale = 1;
 	yscale = 1;
 	
 	edgeCull = 4000;
 	simplify = 1;
+	
+	rotationCompensation = 0;
 	
 	xTextureScale = 1;
 	yTextureScale = 1;
@@ -53,6 +58,7 @@ bool ofxRGBDRenderer::setup(string calibrationDirectory){
 	loadMat(rotationDepthToRGB, calibrationDirectory+"/rotationDepthToRGB.yml");
 	loadMat(translationDepthToRGB, calibrationDirectory+"/translationDepthToRGB.yml");
 	
+	
 	setSimplification(1);
 }
 
@@ -61,8 +67,8 @@ void ofxRGBDRenderer::setSimplification(int level){
 	if (simplify < 0) {
 		simplify = 1;
 	}
-	else if(simplify > 4){
-		simplify == 4;
+	else if(simplify > 8){
+		simplify == 8;
 	}
 	
 	baseIndeces.clear();
@@ -145,18 +151,24 @@ void ofxRGBDRenderer::update(){
 	
 	int imageIndex = 0;
 	int vertexIndex = 0;
-	
+	ofVec3f pivotPoint = ofVec3f(principalPoint.x + xmult, principalPoint.y + ymult, 0);
+	ofVec3f pivotAxis = ofVec3f(0,0,1);
 	for(int y = 0; y < h; y+= simplify) {
 		for(int x = 0; x < w; x+= simplify) {
 
             unsigned short z = currentDepthImage[y*w+x];
 			IndexMap indx;
 			if(z != 0 && z < farClip){
-				float xReal = (((float) x - principalPoint.x + xshift ) / imageSize.width) * z * fx;
-				float yReal = (((float) y - principalPoint.y + yshift ) / imageSize.height) * z * fy;
+				float xReal = (((float) x - principalPoint.x + xmult ) / imageSize.width) * z * fx + xshift /* * xscale*/;
+				float yReal = (((float) y - principalPoint.y + ymult ) / imageSize.height) * z * fy + yshift  /* * yscale*/;
 				indx.vertexIndex = simpleMesh.getVertices().size();
 				indx.valid = true;
-				simpleMesh.addVertex(ofVec3f(xReal, yReal, z));
+				ofVec3f pt = ofVec3f(xReal, yReal, z);
+				//float angle, const ofVec3f& pivot, const ofVec3f& axis 
+//				if(rotationCompensation != 0){
+//					pt.rotate(rotationCompensation, pivotPoint, pivotAxis);
+//				}
+				simpleMesh.addVertex(pt);
 			}
 			else {
 				indx.valid = false;
@@ -166,7 +178,7 @@ void ofxRGBDRenderer::update(){
 	}
 	if(debug) cout << "unprojection " << simpleMesh.getVertices().size() << " took " << ofGetElapsedTimeMillis() - start << endl;
 
-	if(simpleMesh.getVertices().size()  < 3){
+	if(simpleMesh.getVertices().size() < 3){
 		return;
 	}
 	
@@ -294,6 +306,9 @@ void ofxRGBDRenderer::drawWireFrame() {
 	}
 	glDisable(GL_DEPTH_TEST);
 	
-	glPopMatrix();
-	
+	glPopMatrix();	
+}
+
+ofTexture& ofxRGBDRenderer::getTextureReference(){
+	return currentRGBImage->getTextureReference();
 }

@@ -40,10 +40,13 @@ class ofxRGBDRenderer {
 	//fudge factors to apply during alignment
 	float xshift;
 	float yshift;
+	float xmult;
+	float ymult;
 	float xscale;
 	float yscale;
+	float rotationCompensation;
+	
 	float edgeCull;
-//	ofRange zThreshold;
 	float farClip;
 	
 	//sets a level of simplification, 
@@ -58,6 +61,7 @@ class ofxRGBDRenderer {
 	
 	//populated with vertices, texture coords, and indeces
 	ofMesh& getMesh();
+	ofTexture& getTextureReference();
 	
 	ofShader rgbdShader;
 

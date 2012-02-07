@@ -60,8 +60,12 @@ void ofxTLDepthImageSequence::update(ofEventArgs& args){
 
 void ofxTLDepthImageSequence::draw(){
 
-	ofPushStyle();
+	if(getDrawRect().height < 10){
+		return;
+	}
 	
+	ofPushStyle();
+
 	if(thumbsEnabled){
 		ofSetColor(255);
 		for(int i = 0; i < videoThumbs.size(); i++){

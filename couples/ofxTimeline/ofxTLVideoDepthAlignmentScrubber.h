@@ -29,6 +29,8 @@ class ofxTLVideoDepthAlignmentScrubber : public ofxTLElement {
 	virtual void mouseDragged(ofMouseEventArgs& args, bool snapped);
 	virtual void mouseReleased(ofMouseEventArgs& args);
 	
+	virtual void keyPressed(ofKeyEventArgs& args);
+	
 	void load();
 	void save();
 	
@@ -39,7 +41,8 @@ class ofxTLVideoDepthAlignmentScrubber : public ofxTLElement {
 	void removeAlignmentPair(int index);
 	
 	vector<VideoDepthPair> & getPairs();
-
+	ofxRGBDVideoDepthSequence& getPairSequence();
+	
 	ofxTLVideoPlayer* videoSequence;
 	ofxTLDepthImageSequence* depthSequence;
 	
@@ -49,6 +52,8 @@ class ofxTLVideoDepthAlignmentScrubber : public ofxTLElement {
 	ofxRGBDVideoDepthSequence pairSequence;
 	void updateSelection();
 
+	int selectedPairIndex;
+	
 	int selectedVideoFrame;
 	int selectedDepthFrame;
 	int selectedPercent;
