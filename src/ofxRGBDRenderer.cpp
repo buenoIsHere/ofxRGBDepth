@@ -159,7 +159,7 @@ void ofxRGBDRenderer::update(){
             unsigned short z = currentDepthImage[y*w+x];
 			IndexMap indx;
 			if(z != 0 && z < farClip){
-				float xReal = (((float) x - principalPoint.x + xmult ) / imageSize.width) * z * fx/* + xshift*/;
+				float xReal = (((float) principalPoint.x - x + xmult ) / imageSize.width) * z * fx/* + xshift*/;
 				float yReal = (((float) y - principalPoint.y + ymult ) / imageSize.height) * z * fy/* + yshift*/;
 				indx.vertexIndex = simpleMesh.getVertices().size();
 				indx.valid = true;
@@ -236,7 +236,7 @@ void ofxRGBDRenderer::update(){
 		
 		start = ofGetElapsedTimeMillis();
 		for(int i = 0; i < imagePoints.size(); i++) {
-			ofVec2f textureCoord = ofVec2f(imagePoints[i].x * xTextureScale, imagePoints[i].y * yTextureScale);
+			ofVec2f textureCoord = ofVec2f( currentRGBImage->getTextureReference().getWidth() - imagePoints[i].x * xTextureScale, imagePoints[i].y * yTextureScale);
 			simpleMesh.addTexCoord(textureCoord);
 		}
 		
