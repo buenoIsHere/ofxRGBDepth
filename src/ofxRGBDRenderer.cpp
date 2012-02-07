@@ -68,7 +68,7 @@ bool ofxRGBDRenderer::setup(string calibrationDirectory){
 
 void ofxRGBDRenderer::setSimplification(int level){
 	simplify = level;
-	if (simplify < 0) {
+	if (simplify <= 0) {
 		simplify = 1;
 	}
 	else if(simplify > 8){
@@ -163,7 +163,7 @@ void ofxRGBDRenderer::update(){
             unsigned short z = currentDepthImage[y*w+x];
 			IndexMap indx;
 			if(z != 0 && z < farClip){
-				float xReal = (((float) x - principalPoint.x + xmult ) / imageSize.width) * z * fx/* + xshift*/;
+				float xReal = -(((float) x - principalPoint.x + xmult ) / imageSize.width) * z * fx/* + xshift*/;
 				float yReal = (((float) y - principalPoint.y + ymult ) / imageSize.height) * z * fy/* + yshift*/;
 				indx.vertexIndex = simpleMesh.getVertices().size();
 				indx.valid = true;
