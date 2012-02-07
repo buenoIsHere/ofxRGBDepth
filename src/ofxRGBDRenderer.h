@@ -49,6 +49,8 @@ class ofxRGBDRenderer {
 	float edgeCull;
 	float farClip;
 	
+	float fadeToWhite; //0 to 1
+	
 	//sets a level of simplification, 
 	//should be either 1 for none
 	//2 for half, or 4 for quarter;
@@ -67,11 +69,12 @@ class ofxRGBDRenderer {
 
 	Calibration& getRGBCalibration();
 	Calibration& getDepthCalibration();
+	
   protected:
 	
+	ofShader colorShader;
 	int simplify;
 
-	
 	float xTextureScale;
 	float yTextureScale;
 

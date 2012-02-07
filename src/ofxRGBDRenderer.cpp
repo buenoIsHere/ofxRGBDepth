@@ -36,6 +36,8 @@ ofxRGBDRenderer::ofxRGBDRenderer(){
 	hasRGBImage = false;
 
 	farClip = 5000;
+	fadeToWhite = 0.0;
+	
 //	zThreshold = ofRange(1, 5000);
 }
 
@@ -58,6 +60,8 @@ bool ofxRGBDRenderer::setup(string calibrationDirectory){
 	loadMat(rotationDepthToRGB, calibrationDirectory+"/rotationDepthToRGB.yml");
 	loadMat(translationDepthToRGB, calibrationDirectory+"/translationDepthToRGB.yml");
 	
+	colorShader.load("shaders/colorcontrol");
+	colorShader.setUniform1i("tex0", 0);
 	
 	setSimplification(1);
 }
@@ -258,11 +262,14 @@ void ofxRGBDRenderer::drawMesh() {
 	
 	glEnable(GL_DEPTH_TEST);
 	if(hasRGBImage){
+		colorShader.begin();
+		colorShader.setUniform1f("white", fadeToWhite);		
 		currentRGBImage->getTextureReference().bind();
 	}
 	simpleMesh.drawFaces();
 	if(hasRGBImage){
 		currentRGBImage->getTextureReference().unbind();
+		colorShader.end();
 	}
 	glDisable(GL_DEPTH_TEST);
 	
@@ -278,11 +285,14 @@ void ofxRGBDRenderer::drawPointCloud() {
 	
 	glEnable(GL_DEPTH_TEST);
 	if(hasRGBImage){
+		colorShader.begin();
+		colorShader.setUniform1f("white", fadeToWhite);				
 		currentRGBImage->getTextureReference().bind();
 	}
 	simpleMesh.drawVertices();
 	if(hasRGBImage){
 		currentRGBImage->getTextureReference().unbind();
+		colorShader.end();
 	}
 	glDisable(GL_DEPTH_TEST);
 	
@@ -298,11 +308,14 @@ void ofxRGBDRenderer::drawWireFrame() {
 	
 	glEnable(GL_DEPTH_TEST);
 	if(hasRGBImage){
+		colorShader.begin();
+		colorShader.setUniform1f("white", fadeToWhite);				
 		currentRGBImage->getTextureReference().bind();
 	}
 	simpleMesh.drawWireframe();
 	if(hasRGBImage){
 		currentRGBImage->getTextureReference().unbind();
+		colorShader.end();
 	}
 	glDisable(GL_DEPTH_TEST);
 	
