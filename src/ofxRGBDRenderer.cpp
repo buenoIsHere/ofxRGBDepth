@@ -26,7 +26,6 @@ ofxRGBDRenderer::ofxRGBDRenderer(){
 	
 	edgeCull = 4000;
 	simplify = 1;
-	
 	rotationCompensation = 0;
 	
 	xTextureScale = 1;
@@ -163,8 +162,14 @@ void ofxRGBDRenderer::update(){
             unsigned short z = currentDepthImage[y*w+x];
 			IndexMap indx;
 			if(z != 0 && z < farClip){
-				float xReal = -(((float) x - principalPoint.x + xmult ) / imageSize.width) * z * fx/* + xshift*/;
-				float yReal = (((float) y - principalPoint.y + ymult ) / imageSize.height) * z * fy/* + yshift*/;
+				float xReal,yReal;
+				if(mirror){
+					xReal = (((float) principalPoint.x - x + xmult ) / imageSize.width) * z * fx/* + xshift*/;
+				}
+				else{
+					xReal = (((float) x - principalPoint.x + xmult ) / imageSize.width) * z * fx/* + xshift*/;
+				}
+				yReal = (((float) y - principalPoint.y + ymult ) / imageSize.height) * z * fy/* + yshift*/;
 				indx.vertexIndex = simpleMesh.getVertices().size();
 				indx.valid = true;
 				ofVec3f pt = ofVec3f(xReal, yReal, z);
@@ -240,8 +245,12 @@ void ofxRGBDRenderer::update(){
 		
 		start = ofGetElapsedTimeMillis();
 		for(int i = 0; i < imagePoints.size(); i++) {
-			ofVec2f textureCoord = ofVec2f(imagePoints[i].x * xTextureScale, imagePoints[i].y * yTextureScale);
-			simpleMesh.addTexCoord(textureCoord);
+			if(mirror){
+				simpleMesh.addTexCoord(ofVec2f( currentRGBImage->getTextureReference().getWidth() - imagePoints[i].x * xTextureScale, imagePoints[i].y * yTextureScale));
+			}
+			else{
+				simpleMesh.addTexCoord(ofVec2f( imagePoints[i].x * xTextureScale, imagePoints[i].y * yTextureScale));			
+			}
 		}
 		
 		if(debug) cout << "gen tex coords took " << (ofGetElapsedTimeMillis() - start) << endl;
@@ -249,7 +258,6 @@ void ofxRGBDRenderer::update(){
 }
 
 ofMesh& ofxRGBDRenderer::getMesh(){
-	//return mesh;
 	return simpleMesh;
 }
 

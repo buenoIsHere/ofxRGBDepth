@@ -50,6 +50,7 @@ class ofxRGBDRenderer {
 	float farClip;
 	
 	float fadeToWhite; //0 to 1
+	bool mirror;
 	
 	//sets a level of simplification, 
 	//should be either 1 for none
@@ -65,8 +66,6 @@ class ofxRGBDRenderer {
 	ofMesh& getMesh();
 	ofTexture& getTextureReference();
 	
-	ofShader rgbdShader;
-
 	Calibration& getRGBCalibration();
 	Calibration& getDepthCalibration();
 	
