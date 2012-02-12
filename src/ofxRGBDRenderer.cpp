@@ -267,6 +267,7 @@ void ofxRGBDRenderer::drawMesh() {
 	
 	glPushMatrix();
 	glScaled(1, -1, 1);
+	glRotatef(rotateMeshX, 1, 0, 0);
 	
 	glEnable(GL_DEPTH_TEST);
 	if(hasRGBImage){
@@ -290,7 +291,7 @@ void ofxRGBDRenderer::drawPointCloud() {
 	
 	glPushMatrix();
 	glScaled(1, -1, 1);
-	
+	glRotatef(rotateMeshX, 1, 0, 0);
 	glEnable(GL_DEPTH_TEST);
 	if(hasRGBImage){
 		colorShader.begin();
@@ -313,6 +314,7 @@ void ofxRGBDRenderer::drawWireFrame() {
 	
 	glPushMatrix();
 	glScaled(1, -1, 1);
+	glRotatef(rotateMeshX, 1, 0, 0);
 	
 	glEnable(GL_DEPTH_TEST);
 	if(hasRGBImage){

@@ -52,6 +52,7 @@ class ofxRGBDRenderer {
 	float fadeToWhite; //0 to 1
 	bool mirror;
 	
+	float rotateMeshX;
 	//sets a level of simplification, 
 	//should be either 1 for none
 	//2 for half, or 4 for quarter;
