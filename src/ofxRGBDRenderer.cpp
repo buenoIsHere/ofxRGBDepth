@@ -37,6 +37,8 @@ ofxRGBDRenderer::ofxRGBDRenderer(){
 	farClip = 5000;
 	fadeToWhite = 0.0;
 	
+	bUndistortDepth = false;
+	
 //	zThreshold = ofRange(1, 5000);
 }
 
@@ -109,7 +111,10 @@ void ofxRGBDRenderer::setRGBTexture(ofBaseHasTexture& rgbImage) {
 }
 
 void ofxRGBDRenderer::setDepthImage(unsigned short* depthPixelsRaw){
-	currentDepthImage = depthPixelsRaw;
+	currentDepthImage.setFromPixels(depthPixelsRaw, 640,480, OF_IMAGE_GRAYSCALE);
+	if(!undistortedDepthImage.isAllocated()){
+		undistortedDepthImage.allocate(640,480,OF_IMAGE_GRAYSCALE);
+	}
 	hasDepthImage = true;
 }
 
@@ -138,28 +143,33 @@ void ofxRGBDRenderer::update(){
 	
 	int start = ofGetElapsedTimeMillis();
 
-	Point2d fov = depthCalibration.getDistortedIntrinsics().getFov();
+	Point2d fov = depthCalibration.getUndistortedIntrinsics().getFov();
 	
 	float fx = tanf(ofDegToRad(fov.x) / 2) * 2;
 	float fy = tanf(ofDegToRad(fov.y) / 2) * 2;
 	
-	Point2d principalPoint = depthCalibration.getDistortedIntrinsics().getPrincipalPoint();
-	cv::Size imageSize = depthCalibration.getDistortedIntrinsics().getImageSize();
-		
+	Point2d principalPoint = depthCalibration.getUndistortedIntrinsics().getPrincipalPoint();
+	cv::Size imageSize = depthCalibration.getUndistortedIntrinsics().getImageSize();
+	
+	if(bUndistortDepth){
+		depthCalibration.undistort( toCv(currentDepthImage), toCv(undistortedDepthImage) );
+	}
+	else{
+		undistortedDepthImage.setFromPixels(currentDepthImage);
+	}
+	
 	vector<IndexMap> indexMap;
 	simpleMesh.clearVertices();
 	simpleMesh.clearIndices();
 	simpleMesh.clearTexCoords();
 	simpleMesh.clearNormals();
 	
+	
 	int imageIndex = 0;
 	int vertexIndex = 0;
-	ofVec3f pivotPoint = ofVec3f(principalPoint.x + xmult, principalPoint.y + ymult, 0);
-	ofVec3f pivotAxis = ofVec3f(0,0,1);
 	for(int y = 0; y < h; y+= simplify) {
 		for(int x = 0; x < w; x+= simplify) {
-
-            unsigned short z = currentDepthImage[y*w+x];
+			unsigned short z = undistortedDepthImage.getPixels()[y*w+x];
 			IndexMap indx;
 			if(z != 0 && z < farClip){
 				float xReal,yReal;
@@ -173,10 +183,6 @@ void ofxRGBDRenderer::update(){
 				indx.vertexIndex = simpleMesh.getVertices().size();
 				indx.valid = true;
 				ofVec3f pt = ofVec3f(xReal, yReal, z);
-				//float angle, const ofVec3f& pivot, const ofVec3f& axis 
-//				if(rotationCompensation != 0){
-//					pt.rotate(rotationCompensation, pivotPoint, pivotAxis);
-//				}
 				simpleMesh.addVertex(pt);
 			}
 			else {
@@ -186,8 +192,8 @@ void ofxRGBDRenderer::update(){
 		}
 	}
 	if(debug) cout << "unprojection " << simpleMesh.getVertices().size() << " took " << ofGetElapsedTimeMillis() - start << endl;
-
 	if(simpleMesh.getVertices().size() < 3){
+		ofLogError("ofxRGBDRenderer -- No verts");
 		return;
 	}
 	

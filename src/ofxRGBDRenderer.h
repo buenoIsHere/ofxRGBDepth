@@ -52,6 +52,8 @@ class ofxRGBDRenderer {
 	float fadeToWhite; //0 to 1
 	bool mirror;
 	
+	bool bUndistortDepth;
+	
 	float rotateMeshX;
 	//sets a level of simplification, 
 	//should be either 1 for none
@@ -85,7 +87,9 @@ class ofxRGBDRenderer {
 	bool hasRGBImage;
 	
 	ofBaseHasTexture* currentRGBImage;
-	unsigned short* currentDepthImage;
+	ofShortImage currentDepthImage;
+	ofShortImage undistortedDepthImage;
+//	unsigned short* currentDepthImage;
 	
 	vector<Point2f> imagePoints;    
 	ofMesh simpleMesh;

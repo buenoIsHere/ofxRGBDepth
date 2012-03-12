@@ -49,7 +49,7 @@ unsigned short* ofxDepthImageCompressor::readDepthFrame(string filename, unsigne
 	return readDepthFrame(infile, outbuf);
 }
 
-unsigned short* ofxDepthImageCompressor::readDepthFrame(ofFile infile,  unsigned short* outbuf){
+unsigned short* ofxDepthImageCompressor::readDepthFrame(ofFile infile,  unsigned short* outbuf) {
     if(outbuf == NULL){
         outbuf = new unsigned short[640*480];
     }
@@ -60,8 +60,7 @@ unsigned short* ofxDepthImageCompressor::readDepthFrame(ofFile infile,  unsigned
 	return outbuf;
 }
 
-ofImage ofxDepthImageCompressor::readDepthFrametoImage(string filename){	
-	
+ofImage ofxDepthImageCompressor::readDepthFrametoImage(string filename) {
 	unsigned short* depthFrame = readDepthFrame(filename);
 	ofImage outputImage = convertTo8BitImage(depthFrame);
 	
@@ -69,7 +68,7 @@ ofImage ofxDepthImageCompressor::readDepthFrametoImage(string filename){
 	return outputImage;
 }
 
-ofImage ofxDepthImageCompressor::convertTo8BitImage(unsigned short* buf){
+ofImage ofxDepthImageCompressor::convertTo8BitImage(unsigned short* buf) {
 	int nearPlane = 500;
 	int farPlane = 4000;
 	ofImage outputImage;
@@ -92,6 +91,8 @@ unsigned short* ofxDepthImageCompressor::readCompressedPng(string filename, unsi
 		outbuf = new unsigned short[640*480];
 	}
 	
+	ofLogVerbose("ofxDepthImageCompressor -- loading depth frame with filename " + filename );
+	
 	int totalDif = 0;
 	ofImage compressedImage;
 	if(!compressedImage.loadImage(filename)){
@@ -100,10 +101,13 @@ unsigned short* ofxDepthImageCompressor::readCompressedPng(string filename, unsi
 	}
 	
 	unsigned char* compressedPix = compressedImage.getPixels();
-	
+
+	unsigned short accumulation = 0;
 	for(int i = 0; i < 640*480; i++){
 		outbuf[i] = (compressedPix[i*3] << 8) | compressedPix[i*3+1];
+		accumulation += outbuf[i];
 	}
+	ofLogVerbose("ofxDepthImageCompressor -- total depth amount " + ofToString(accumulation));
 	
 	return outbuf;
 }
