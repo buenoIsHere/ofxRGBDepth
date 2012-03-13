@@ -37,9 +37,6 @@ ofxRGBDRenderer::ofxRGBDRenderer(){
 	farClip = 5000;
 	fadeToWhite = 0.0;
 	
-	bUndistortDepth = false;
-	
-//	zThreshold = ofRange(1, 5000);
 }
 
 ofxRGBDRenderer::~ofxRGBDRenderer(){
@@ -151,20 +148,15 @@ void ofxRGBDRenderer::update(){
 	Point2d principalPoint = depthCalibration.getUndistortedIntrinsics().getPrincipalPoint();
 	cv::Size imageSize = depthCalibration.getUndistortedIntrinsics().getImageSize();
 	
-	if(bUndistortDepth){
-		depthCalibration.undistort( toCv(currentDepthImage), toCv(undistortedDepthImage) );
-	}
-	else{
-		undistortedDepthImage.setFromPixels(currentDepthImage);
-	}
+	depthCalibration.undistort( toCv(currentDepthImage), toCv(undistortedDepthImage) );
+	
 	
 	vector<IndexMap> indexMap;
 	simpleMesh.clearVertices();
 	simpleMesh.clearIndices();
 	simpleMesh.clearTexCoords();
 	simpleMesh.clearNormals();
-	
-	
+		
 	int imageIndex = 0;
 	int vertexIndex = 0;
 	for(int y = 0; y < h; y+= simplify) {
@@ -224,8 +216,7 @@ void ofxRGBDRenderer::update(){
 			}
 		}
 	}
-
-
+	
 	if(debug) cout << "indexing  " << simpleMesh.getIndices().size() << " took " << ofGetElapsedTimeMillis() - start << endl;
 
 	if(hasRGBImage){
@@ -249,7 +240,9 @@ void ofxRGBDRenderer::update(){
 	
 		if(debug) cout << "project points " << (ofGetElapsedTimeMillis() - start) << endl;
 		
+		
 		start = ofGetElapsedTimeMillis();
+
 		for(int i = 0; i < imagePoints.size(); i++) {
 			if(mirror){
 				simpleMesh.addTexCoord(ofVec2f( currentRGBImage->getTextureReference().getWidth() - imagePoints[i].x * xTextureScale, imagePoints[i].y * yTextureScale));
@@ -258,7 +251,6 @@ void ofxRGBDRenderer::update(){
 				simpleMesh.addTexCoord(ofVec2f( imagePoints[i].x * xTextureScale, imagePoints[i].y * yTextureScale));			
 			}
 		}
-		
 		if(debug) cout << "gen tex coords took " << (ofGetElapsedTimeMillis() - start) << endl;
 	}
 }
