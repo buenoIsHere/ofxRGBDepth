@@ -24,7 +24,7 @@ void ofxCvCheckerboardPreview::setup(int squaresWide, int squaresTall, int squar
 
 }
 
-void ofxCvCheckerboardPreview::setTestImage(ofPixels& pixels) {
+void ofxCvCheckerboardPreview::setTestImage(ofPixelsRef pixels) {
 	
 	if(pixels.getImageType() != OF_IMAGE_GRAYSCALE){
 		ofLogError("ofxCvCheckerboardPreview -- must use grayscale image");
@@ -34,7 +34,7 @@ void ofxCvCheckerboardPreview::setTestImage(ofPixels& pixels) {
 	lock();
 	testImage = pixels;
 	if(!internalPixels.isAllocated()){
-		internalPixels.allocate(pixels.getWidth(), pixels.getHeight(), OF_PIXELS_MONO);
+		internalPixels.allocate(pixels.getWidth(), pixels.getHeight(), OF_IMAGE_GRAYSCALE);
 	}
 	newBoardToFind = true;
 	boardFound = false;

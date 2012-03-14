@@ -79,6 +79,10 @@ vector<string> ofxDepthImageRecorder::getTakePaths(){
 	return paths;
 }
 
+bool ofxDepthImageRecorder::addImage(ofShortPixels& image){
+	addImage(image.getPixels());
+}
+
 bool ofxDepthImageRecorder::addImage(unsigned short* image){
 	//confirm that it isn't a duplicate of the most recent frame;
 	int framebytes = 640*480*sizeof(unsigned short);

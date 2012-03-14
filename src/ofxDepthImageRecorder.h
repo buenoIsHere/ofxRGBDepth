@@ -46,9 +46,9 @@ class ofxDepthImageRecorder {
 	bool isRecording();
 	
 	void setRecordLocation(string directory, string filePrefix);
+	bool addImage(ofShortPixels& image);
 	bool addImage(unsigned short* image);
 
-		
 	int numFramesWaitingSave();
 	int numFramesWaitingCompession();
 	int numDirectoriesWaitingCompression();
@@ -58,7 +58,6 @@ class ofxDepthImageRecorder {
 	void encoderThreadCallback();
 	void recorderThreadCallback();
 	
-
   protected:
 	bool recording;
 	

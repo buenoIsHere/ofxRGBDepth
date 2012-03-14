@@ -19,7 +19,7 @@ class ofxCvCheckerboardPreview : public ofThread {
   public:
 	void setup(int squaresWide, int squaresTall, int squareSize); //starts the thread
 	
-	void setTestImage(ofPixels& pixels);
+	void setTestImage(ofPixelsRef pixels);
 	void setSmallestSquarePixelsize(int squarePixelSize);
 	bool currentImageHasCheckerboard();	
 	void draw();
