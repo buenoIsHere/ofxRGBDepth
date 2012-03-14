@@ -17,6 +17,7 @@ class ofxDepthImageProvider {
 	virtual void setup() = 0;
 	virtual void update() = 0;
 	virtual int maxDepth() = 0;	
+	virtual void close() = 0;
 	
 	bool isFrameNew();
 	bool deviceFound();

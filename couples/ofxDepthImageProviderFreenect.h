@@ -19,7 +19,8 @@ class ofxDepthImageProviderFreenect : public ofxDepthImageProvider {
 	void setup(); 
 	void update();
 	int maxDepth();	
-
+	void close();
+	
   protected:
 	ofxKinect kinect;
 };

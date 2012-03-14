@@ -33,3 +33,7 @@ void ofxDepthImageProviderFreenect::update(){
 int ofxDepthImageProviderFreenect::maxDepth(){
 	return 10000; //taken from looking into how ofxKinect calculates it's look up tables.
 }
+
+void ofxDepthImageProviderFreenect::close(){
+	kinect.close();
+}
