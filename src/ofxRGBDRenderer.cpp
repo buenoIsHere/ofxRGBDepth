@@ -57,11 +57,13 @@ bool ofxRGBDRenderer::setup(string calibrationDirectory){
 	
 	loadMat(rotationDepthToRGB, calibrationDirectory+"/rotationDepthToRGB.yml");
 	loadMat(translationDepthToRGB, calibrationDirectory+"/translationDepthToRGB.yml");
-	
+	cout << translationDepthToRGB << " matrix! " << endl;
 	colorShader.load("shaders/colorcontrol");
 	colorShader.setUniform1i("tex0", 0);
 	
 	setSimplification(1);
+
+	return true;
 }
 
 void ofxRGBDRenderer::setSimplification(int level){

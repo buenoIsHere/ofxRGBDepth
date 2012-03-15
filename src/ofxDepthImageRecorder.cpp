@@ -80,7 +80,7 @@ vector<string> ofxDepthImageRecorder::getTakePaths(){
 }
 
 bool ofxDepthImageRecorder::addImage(ofShortPixels& image){
-	addImage(image.getPixels());
+	return addImage(image.getPixels());
 }
 
 bool ofxDepthImageRecorder::addImage(unsigned short* image){
@@ -186,6 +186,7 @@ void ofxDepthImageRecorder::recorderThreadCallback(){
 			ofLogError("ofxDepthImageRecorder -- Save Failed! readding to queue");
 		}
 	}
+	ofSleepMillis(2);
 }
 
 void ofxDepthImageRecorder::encoderThreadCallback(){
