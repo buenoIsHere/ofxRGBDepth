@@ -36,6 +36,7 @@ ofxRGBDRenderer::ofxRGBDRenderer(){
 
 	farClip = 5000;
 	fadeToWhite = 0.0;
+	useCustomShader = false;
 	
 }
 
@@ -62,6 +63,7 @@ bool ofxRGBDRenderer::setup(string calibrationDirectory){
 	colorShader.setUniform1i("tex0", 0);
 	
 	setSimplification(1);
+	return true;
 }
 
 void ofxRGBDRenderer::setSimplification(int level){
@@ -131,7 +133,7 @@ Calibration& ofxRGBDRenderer::getRGBCalibration(){
 void ofxRGBDRenderer::update(){
 	
 	if(!hasDepthImage) return;
-	//cout << "processing depth frame " << endl;
+	
 	
 	bool debug = false;
 	
@@ -269,14 +271,18 @@ void ofxRGBDRenderer::drawMesh() {
 	
 	glEnable(GL_DEPTH_TEST);
 	if(hasRGBImage){
-		colorShader.begin();
-		colorShader.setUniform1f("white", fadeToWhite);		
+		if(useCustomShader){
+			colorShader.begin();
+			colorShader.setUniform1f("white", fadeToWhite);		
+		}
 		currentRGBImage->getTextureReference().bind();
 	}
 	simpleMesh.drawFaces();
 	if(hasRGBImage){
 		currentRGBImage->getTextureReference().unbind();
-		colorShader.end();
+		if(useCustomShader){
+			colorShader.end();
+		}
 	}
 	glDisable(GL_DEPTH_TEST);
 	

@@ -59,6 +59,7 @@ class ofxRGBDRenderer {
 	void setSimplification(int level);
 	int getSimplification();
 	
+	bool useCustomShader;
 	void drawMesh();
 	void drawPointCloud();
 	void drawWireFrame();

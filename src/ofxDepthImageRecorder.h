@@ -38,7 +38,7 @@ class ofxDepthImageRecorder {
   public:
 	ofxDepthImageRecorder();
 	~ofxDepthImageRecorder();
-	
+
 	vector<string> getTakePaths();
 	
 	void setup();
@@ -53,10 +53,13 @@ class ofxDepthImageRecorder {
 	int numFramesWaitingCompession();
 	int numDirectoriesWaitingCompression();
 	
+	void shutdown();
+	
 	int recordingStartTime; //in millis -- potentially should make this more accurate
 	
 	void encoderThreadCallback();
 	void recorderThreadCallback();
+	
 	
   protected:
 	bool recording;

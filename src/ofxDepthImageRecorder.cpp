@@ -159,6 +159,11 @@ void ofxDepthImageRecorder::incrementTake(){
     currentFrame = 0;	
 	recordingStartTime = ofGetElapsedTimeMillis();
 }
+
+void ofxDepthImageRecorder::shutdown(){
+	recorderThread.stopThread(true);
+	encoderThread.stopThread(true);
+}
 											  
 void ofxDepthImageRecorder::recorderThreadCallback(){
 
@@ -186,6 +191,7 @@ void ofxDepthImageRecorder::recorderThreadCallback(){
 			ofLogError("ofxDepthImageRecorder -- Save Failed! readding to queue");
 		}
 	}
+	ofSleepMillis(2);
 }
 
 void ofxDepthImageRecorder::encoderThreadCallback(){
