@@ -270,11 +270,11 @@ void ofxRGBDAlignment::saveAlignment(string saveDirectory) {
 		
 		for(int i = 0; i < rgbImages.size(); i++){
 			//string pathSrc, string pathDst, bool bRelativeToData = true,  bool overwrite = false
-			ofFile::copyFromTo(rgbImages[i].filepath, rgbImageOutDir.getOriginalDirectory(), false, false);
+			//ofFile::copyFromTo(rgbImages[i].filepath, rgbImageOutDir.getOriginalDirectory(), false, false);
 		}
 		for(int i = 0; i < depthImages.size(); i++){
 			//string pathSrc, string pathDst, bool bRelativeToData = true,  bool overwrite = false
-			ofFile::copyFromTo(depthImages[i].filepath, depthImageOutDir.getOriginalDirectory(), false, false);
+			//ofFile::copyFromTo(depthImages[i].filepath, depthImageOutDir.getOriginalDirectory(), false, false);
 		}
 	}
 	else {

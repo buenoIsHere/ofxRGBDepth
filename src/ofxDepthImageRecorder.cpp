@@ -80,7 +80,7 @@ vector<string> ofxDepthImageRecorder::getTakePaths(){
 }
 
 bool ofxDepthImageRecorder::addImage(ofShortPixels& image){
-	addImage(image.getPixels());
+	return addImage(image.getPixels());
 }
 
 bool ofxDepthImageRecorder::addImage(unsigned short* image){
