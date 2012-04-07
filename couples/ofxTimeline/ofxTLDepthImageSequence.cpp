@@ -143,11 +143,11 @@ void ofxTLDepthImageSequence::keyPressed(ofKeyEventArgs& args){
 }
 
 void ofxTLDepthImageSequence::playbackStarted(ofxTLPlaybackEventArgs& args){
-	ofAddListener(ofEvents.update, this, &ofxTLDepthImageSequence::update);
+	ofAddListener(ofEvents().update, this, &ofxTLDepthImageSequence::update);
 }
 
 void ofxTLDepthImageSequence::playbackEnded(ofxTLPlaybackEventArgs& args){
-	ofRemoveListener(ofEvents.update, this, &ofxTLDepthImageSequence::update);
+	ofRemoveListener(ofEvents().update, this, &ofxTLDepthImageSequence::update);
 
 }
 void ofxTLDepthImageSequence::playbackLooped(ofxTLPlaybackEventArgs& args){
