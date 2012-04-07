@@ -20,6 +20,7 @@ class ofxDepthHoleFiller {
   public:
 	
 	ofxDepthHoleFiller();
+	
 	void close(ofShortPixels& depthPixels);
 
 	void setIterations(int iterations);

@@ -33,9 +33,10 @@ int ofxDepthHoleFiller::getKernelSize(){
 
 void ofxDepthHoleFiller::close(ofShortPixels& depthPixels){
 	if(enable){
+		Mat pix = toCv(depthPixels);
+		Mat m_element_m = getStructuringElement(MORPH_RECT, cv::Size(kernelSize, kernelSize));
+
 		for(int i = 0; i < iterations; i++){
-			Mat pix = toCv(depthPixels);
-			Mat m_element_m = getStructuringElement(MORPH_RECT, cv::Size(kernelSize, kernelSize));
 			morphologyEx(pix, pix, MORPH_CLOSE, m_element_m);
 		}
 	}	
