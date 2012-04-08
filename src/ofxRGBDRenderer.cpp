@@ -301,16 +301,21 @@ void ofxRGBDRenderer::drawPointCloud() {
 	glPushMatrix();
 	glScaled(1, -1, 1);
 	glRotatef(rotateMeshX, 1, 0, 0);
-	glEnable(GL_DEPTH_TEST);
 	if(hasRGBImage){
-		colorShader.begin();
-		colorShader.setUniform1f("white", fadeToWhite);				
+//		colorShader.begin();
+//		colorShader.setUniform1f("white", fadeToWhite);				
 		currentRGBImage->getTextureReference().bind();
 	}
-	simpleMesh.drawVertices();
+	
+    ofEnableBlendMode(OF_BLENDMODE_ADD);
+    glEnable(GL_POINT_SMOOTH); // makes circular points
+    glEnable(GL_VERTEX_PROGRAM_POINT_SIZE_ARB);	// allows per-point size
+    glDisable(GL_DEPTH_TEST);		
+    
+    simpleMesh.drawVertices();
 	if(hasRGBImage){
 		currentRGBImage->getTextureReference().unbind();
-		colorShader.end();
+//		colorShader.end();
 	}
 	glDisable(GL_DEPTH_TEST);
 	

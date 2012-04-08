@@ -148,8 +148,8 @@ void ofxTLDepthImageSequence::playbackStarted(ofxTLPlaybackEventArgs& args){
 
 void ofxTLDepthImageSequence::playbackEnded(ofxTLPlaybackEventArgs& args){
 	ofRemoveListener(ofEvents().update, this, &ofxTLDepthImageSequence::update);
-
 }
+
 void ofxTLDepthImageSequence::playbackLooped(ofxTLPlaybackEventArgs& args){
 }
 
