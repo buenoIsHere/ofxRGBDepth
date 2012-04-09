@@ -31,6 +31,8 @@ class ofxRGBDRenderer {
 	void setRGBTexture(ofBaseHasTexture& rgbTexture); 
 	void setDepthImage(unsigned short* depthPixelsRaw);
 
+    ofBaseHasTexture& getRGBTexture();
+
 	//used for supplying a preview texture that is smaller than the image was calibrated on.
 	//helps for playback vs rendering
 	void setTextureScale(float xTextureScale, float yTextureScale);
