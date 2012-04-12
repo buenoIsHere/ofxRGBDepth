@@ -1,0 +1,119 @@
+//
+//  ofxRGBDCaptureGui.h
+//  RGBDCaptureOpenNI
+//
+//  Created by James George on 4/12/12.
+//
+
+#pragma once
+#include "ofMain.h"
+#include "ofxMSAInteractiveObjectDelegate.h"
+#include "ofxGameCamera.h"
+#include "ofxTimeline.h"
+#include "ofxTLDepthImageSequence.h"
+#include "ofxDepthImageCompressor.h"
+#include "ofxDepthImageProvider.h"
+#include "ofxDepthImageRecorder.h"
+#include "ofxCvCheckerboardPreview.h"
+#include "ofxRGBDAlignment.h"
+#include "ofxDepthImageProvider.h"
+
+typedef enum {
+	TabCalibrate,
+	TabRecord,
+	TabPlayback
+} RecorderTab;
+
+typedef enum {
+	RenderBW,
+	RenderRainbow,
+	RenderPointCloud
+} DepthRenderMode;
+
+class ofxRGBDCaptureGui : public ofxMSAInteractiveObjectDelegate {
+  public:
+	ofxRGBDCaptureGui();
+    
+    void setup();
+    void setImageProvider(ofxDepthImageProvider* imageProvider);
+    void update(ofEventArgs& args);
+  	void draw(ofEventArgs& args);
+    
+    void mousePressed(ofMouseEventArgs& args);
+    void mouseMoved(ofMouseEventArgs& args);
+    void mouseDragged(ofMouseEventArgs& args);
+    void mouseReleased(ofMouseEventArgs& args);
+    
+    void keyPressed(ofKeyEventArgs& args);
+    void keyReleased(ofKeyEventArgs& args);
+    
+    void objectDidRollOver(ofxMSAInteractiveObject* object, int x, int y);
+	void objectDidRollOut(ofxMSAInteractiveObject* object, int x, int y);
+	void objectDidPress(ofxMSAInteractiveObject* object, int x, int y, int button);
+	void objectDidRelease(ofxMSAInteractiveObject* object, int x, int y, int button);
+	void objectDidMouseMove(ofxMSAInteractiveObject* object, int x, int y);
+
+    void windowResized(ofResizeEventArgs& args);
+    
+    //void exit(ofEventArgs& args);
+    void exit();
+    
+  protected:
+    
+	void loadDirectory();
+	void loadDirectory(string path);
+	void loadSequenceForPlayback( int index );
+	void updateTakeButtons();
+	
+	void toggleRecord();
+	void captureCalibrationImage();
+    
+	void drawPointcloud(bool fullscreen);
+	
+	string workingDirectory;
+	
+	bool cameraFound;
+	bool fullscreenPoints;
+	
+	ofColor downColor;
+	ofColor idleColor;
+	ofColor hoverColor;
+	
+	float framewidth;
+	float frameheight;
+	float thirdWidth;
+	float btnheight;
+	float takeWidth;
+	
+	ofxMSAInteractiveObjectWithDelegate* btnSetDirectory;
+	
+	ofxMSAInteractiveObjectWithDelegate* btnCalibrateTab;
+	ofxMSAInteractiveObjectWithDelegate* btnRecordTab;
+	ofxMSAInteractiveObjectWithDelegate* btnPlaybackTab;
+	
+	ofxMSAInteractiveObjectWithDelegate* btnRecordBtn;
+	
+	ofxMSAInteractiveObjectWithDelegate* btnRenderBW;
+	ofxMSAInteractiveObjectWithDelegate* btnRenderRainbow;
+	ofxMSAInteractiveObjectWithDelegate* btnRenderPointCloud;
+    
+	vector<ofxMSAInteractiveObjectWithDelegate*> btnTakes;
+	
+	ofxGameCamera cam;
+	
+	ofxTimeline timeline;
+	ofxTLDepthImageSequence depthSequence;
+	ofxRGBDAlignment alignment;
+	ofxDepthImageRecorder recorder;
+	ofxCvCheckerboardPreview calibrationPreview;
+    
+	RecorderTab currentTab;	
+	DepthRenderMode currentRenderMode;
+	
+	ofPtr<ofxDepthImageProvider> depthImageProvider;
+	
+    bool providerSet;
+	unsigned short* frame;
+	ofImage calibrationImage;
+    
+};

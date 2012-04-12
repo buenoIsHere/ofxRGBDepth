@@ -18,13 +18,11 @@ ofxRGBDAlignment::ofxRGBDAlignment() {
 }
 
 //-----------------------------------------------
-
 ofxRGBDAlignment::~ofxRGBDAlignment() {
 	
 }
 
 //-----------------------------------------------
-
 void ofxRGBDAlignment::setup(int squaresWide, int squaresTall, int squareSize) {
 	depthCalibration.setPatternSize(squaresWide, squaresTall);
 	depthCalibration.setSquareSize(squareSize);
@@ -34,6 +32,7 @@ void ofxRGBDAlignment::setup(int squaresWide, int squaresTall, int squareSize) {
 
 }
 
+//-----------------------------------------------
 void ofxRGBDAlignment::addRGBCalibrationImage(string rgbCalibrationImagePath){
 	CalibrationImage ci;
 	ci.filepath = rgbCalibrationImagePath;
@@ -48,6 +47,7 @@ void ofxRGBDAlignment::addRGBCalibrationImage(string rgbCalibrationImagePath){
 	recalculateImageDrawRects();
 }
 
+//-----------------------------------------------
 void ofxRGBDAlignment::addDepthCalibrationImage(string depthCalibrationImagePath){
 	CalibrationImage ci;
 	ci.filepath = depthCalibrationImagePath;
@@ -60,14 +60,15 @@ void ofxRGBDAlignment::addDepthCalibrationImage(string depthCalibrationImagePath
 	ci.reprojectionError = 0;
 	depthImages.push_back( ci );	
 	recalculateImageDrawRects();
-
 }
 
+//-----------------------------------------------
 void ofxRGBDAlignment::addCalibrationImagePair(string depthCalibrationImagePath, string rgbCalibrationPath){
 	addRGBCalibrationImage(rgbCalibrationPath);
 	addDepthCalibrationImage(depthCalibrationImagePath);
 }
 
+//-----------------------------------------------
 void ofxRGBDAlignment::addRGBCalibrationDirectory(string rgbImageDirectory){
 	ofDirectory dir(rgbImageDirectory);
 	if(!dir.exists()){
@@ -88,9 +89,9 @@ void ofxRGBDAlignment::addRGBCalibrationDirectory(string rgbImageDirectory){
 	if (guiIsSetup) {
 		recalculateImageDrawRects();
 	}
-	
 }
 
+//-----------------------------------------------
 void ofxRGBDAlignment::addDepthCalibrationDirectory(string depthImageDirectory){
 	ofDirectory dir(depthImageDirectory);
 	if(!dir.exists()){
@@ -112,19 +113,23 @@ void ofxRGBDAlignment::addDepthCalibrationDirectory(string depthImageDirectory){
 	
 }
 
+//-----------------------------------------------
 void ofxRGBDAlignment::addCalibrationDirectoryPair(string depthImageDirectory, string rgbImageDirectory){
 	addDepthCalibrationDirectory(depthImageDirectory);
 	addRGBCalibrationDirectory(rgbImageDirectory);
 }
 
+//-----------------------------------------------
 void ofxRGBDAlignment::clearRGBImages(){
 	rgbImages.clear();
 }
 
+//-----------------------------------------------
 void ofxRGBDAlignment::clearDepthImages(){
 	depthImages.clear();
 }
 
+//-----------------------------------------------
 void ofxRGBDAlignment::discardCurrentPair(){
 	if(selectedRgbImage != -1){
 		rgbImages.erase(rgbImages.begin() + selectedRgbImage);
@@ -235,6 +240,7 @@ bool ofxRGBDAlignment::generateAlignment(){
 	return ready();
 }
 
+//-----------------------------------------------
 void ofxRGBDAlignment::copyImagesToDirectory(string dir){
 	for(int i = 0; i < depthImages.size(); i++){
 		cout << depthImages[i].filepath << endl;

@@ -52,6 +52,7 @@ void ofxDepthImageProvider::createRainbowPallet() {
 
 ofxDepthImageProvider::ofxDepthImageProvider(){
 	bUseRainbow = true;
+    
 	bDepthImageDirty = false;
 	bDeviceFound = false;
 	bNewFrame = false;
@@ -89,6 +90,7 @@ ofImage& ofxDepthImageProvider::getRawIRImage(){
 }
 
 ofImage& ofxDepthImageProvider::getDepthImage(){
+    
 	if(bDepthImageDirty){
 		
 		if(bUseRainbow){		

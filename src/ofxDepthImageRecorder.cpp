@@ -11,15 +11,21 @@
 
 #pragma mark Thread Implementation
 void ofxRGBDEncoderThread::threadedFunction(){
+    shutdown = false;
 	while(isThreadRunning()){
 		delegate->encoderThreadCallback();
 	}
+    cout << "shutdown encorder" << endl;
+    shutdown = true;
 }
 
 void ofxRGBDRecorderThread::threadedFunction(){
+    shutdown = false;
 	while(isThreadRunning()){
 		delegate->recorderThreadCallback();
 	}
+    cout << "shutdown recorder" << endl;
+    shutdown = true;
 }
 
 #pragma mark Thread Implementation
@@ -163,6 +169,11 @@ void ofxDepthImageRecorder::incrementTake(){
 void ofxDepthImageRecorder::shutdown(){
 	recorderThread.stopThread(true);
 	encoderThread.stopThread(true);
+    while(!encoderThread.shutdown || !recorderThread.shutdown){
+   // 	cout << "not shutdown yet" << endl;
+   		ofSleepMillis(2);
+  	}
+    cout << "shoutdown completed" << endl;
 }
 											  
 void ofxDepthImageRecorder::recorderThreadCallback(){
@@ -215,13 +226,22 @@ void ofxDepthImageRecorder::encoderThreadCallback(){
 		if(encodingBuffer == NULL){
 			encodingBuffer = new unsigned short[640*480];
 		}
-		cout << "ofxDepthImageCompressor -- Starting to convert " << rawDir.numFiles() << " in " << dir << endl;
+		
+        cout << "ofxDepthImageCompressor -- Starting to convert " << rawDir.numFiles() << " in " << dir << endl;
+        
 		framesToCompress = rawDir.numFiles();
 		for(int i = 0; i < rawDir.numFiles(); i++){
+            
 			//don't do this while recording
 			while(recording){
 				ofSleepMillis(250);
 			}
+            
+            if(!encoderThread.isThreadRunning()){
+                cout << "Breaking because recorder isn't running" << endl;
+            	break;
+            }
+            
 			string path = rawDir.getPath(i);
 			compressor.readDepthFrame(path, encodingBuffer);
 			compressor.saveToCompressedPng(ofFilePath::removeExt(path)+".png", encodingBuffer);
@@ -229,6 +249,7 @@ void ofxDepthImageRecorder::encoderThreadCallback(){
 			framesToCompress--;
 		}
 	}
+    
 	ofSleepMillis(2);
 }
 

@@ -2,8 +2,7 @@
  *  ofxRGBDepthFrameProviderOpenNI.h
  *  ofxRGBDepthCaptureOpenNI
  *
- *  Created by Jim on 3/13/12.
- *  Copyright 2012 FlightPhase. All rights reserved.
+ *  Created by James George on 3/13/12.
  *
  */
 
@@ -19,7 +18,8 @@ class ofxDepthImageProviderOpenNI : public ofxDepthImageProvider {
 	void setup();
 	void update();
 	int maxDepth();	
-
+	void close();
+    
   protected:
 	ofxOpenNIContext	recordContext;
 	ofxDepthGenerator	recordDepth;

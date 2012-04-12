@@ -11,17 +11,18 @@
 #include "ofMain.h"
 #include "ofxDepthImageCompressor.h"
 
-typedef struct QueuedFrame {
+typedef struct {
 	unsigned short* pixels;
 	string directory;
 	string filename;
 	int timestamp;
-};
+} QueuedFrame;
 
 //thread classes for callbacks
 class ofxDepthImageRecorder;
 class ofxRGBDRecorderThread : public ofThread {
 public:
+    bool shutdown;
 	ofxDepthImageRecorder* delegate;
 	ofxRGBDRecorderThread(ofxDepthImageRecorder* d) : delegate(d){}	
 	void threadedFunction();
@@ -29,6 +30,7 @@ public:
 
 class ofxRGBDEncoderThread : public ofThread {
 public:
+    bool shutdown;
 	ofxDepthImageRecorder* delegate;
 	ofxRGBDEncoderThread(ofxDepthImageRecorder* d) : delegate(d){}
 	void threadedFunction();	
@@ -63,7 +65,8 @@ class ofxDepthImageRecorder {
 	
   protected:
 	bool recording;
-	
+	bool encoderShutdown;
+    bool recorderShutdown;
 	void incrementTake();
     //start converting the current directory
 	void compressCurrentTake();
