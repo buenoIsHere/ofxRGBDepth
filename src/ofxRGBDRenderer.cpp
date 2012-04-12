@@ -82,8 +82,8 @@ void ofxRGBDRenderer::setSimplification(int level){
 		for (int x=0; x < w-1; x++){
 			ofIndexType a,b,c;
 			a = x+y*w;
-			b = (x+1)+y*w;
-			c = x+(y+1)*w;
+			b = x+(y+1)*w;
+			c = (x+1)+y*w;
 			baseIndeces.push_back(a);
 			baseIndeces.push_back(b);
 			baseIndeces.push_back(c);

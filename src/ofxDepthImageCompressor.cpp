@@ -35,6 +35,7 @@ void ofxDepthImageCompressor::saveToCompressedPng(string filename, unsigned shor
 		pngPixs[i*3+1] = buf[i];
 		pngPixs[i*3+2] = 0;
 	}
+	
 	//compressedDepthImage.setFromPixels(pngPixs, 640,480, OF_IMAGE_COLOR);
 	compressedDepthImage.update();
 	if(ofFilePath::getFileExt(filename) != "png"){

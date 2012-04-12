@@ -110,15 +110,25 @@ bool ofxRGBDVideoDepthSequence::ready(){
 		   (alignedFrames.size() > 1 && !alignedFrames[0].isTimeBased);
 }
 
-int ofxRGBDVideoDepthSequence::getDepthFrameForVideoFrame(int videoFrame){
+long ofxRGBDVideoDepthSequence::getDepthFrameForVideoFrame(int videoFrame){
 
 	if(!ready()){
 		return 0;
 	}
 	
+	//cout << "requesting depth frame for video frame " << videoFrame << endl;
+	
 	if(alignedFrames[0].isTimeBased){
+		if(alignedFrames.size() == 2){
+			long mapping = ofMap(videoFrame, alignedFrames[0].videoFrame, alignedFrames[1].videoFrame,
+								 alignedFrames[0].depthFrame, alignedFrames[1].depthFrame, false);	
+			//cout << "2 time based triggers -- aligned frame " << videoFrame << " to millis " << mapping << endl;
+			return mapping;
+		}
+		//cout << "returning nomral timebased marker" << endl;
 		return (alignedFrames[0].depthFrame - alignedFrames[0].videoFrame) + videoFrame;
-	}
+		
+	}	
 	else {
 		
 		int startIndex, endIndex;
@@ -144,13 +154,13 @@ int ofxRGBDVideoDepthSequence::getDepthFrameForVideoFrame(int videoFrame){
 			endIndex--;
 		}
 		
-		int mapping = ofMap(videoFrame, alignedFrames[startIndex].videoFrame, alignedFrames[endIndex].videoFrame,
+		long mapping = ofMap(videoFrame, alignedFrames[startIndex].videoFrame, alignedFrames[endIndex].videoFrame,
 										alignedFrames[startIndex].depthFrame, alignedFrames[endIndex].depthFrame, false);	
 //		cout << "looking for video frame " << videoFrame << " mapped to depth " << mapping << " found to be between " << startIndex << " and " << endIndex <<endl;
 		return mapping;
 	}
 }
 
-vector<VideoDepthPair> & ofxRGBDVideoDepthSequence::getPairs(){
+vector<VideoDepthPair>& ofxRGBDVideoDepthSequence::getPairs(){
 	return alignedFrames;
 }
