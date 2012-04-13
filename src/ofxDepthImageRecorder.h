@@ -18,6 +18,12 @@ typedef struct {
 	int timestamp;
 } QueuedFrame;
 
+typedef struct {
+    string path;
+	int numFrames;
+    int framesConverted;
+} Take;
+
 //thread classes for callbacks
 class ofxDepthImageRecorder;
 class ofxRGBDRecorderThread : public ofThread {
@@ -41,7 +47,7 @@ class ofxDepthImageRecorder {
 	ofxDepthImageRecorder();
 	~ofxDepthImageRecorder();
 
-	vector<string> getTakePaths();
+    vector<Take>& getTakes();
 	
 	void setup();
 	void toggleRecord();
@@ -62,28 +68,26 @@ class ofxDepthImageRecorder {
 	void encoderThreadCallback();
 	void recorderThreadCallback();
 	
-	
   protected:
-	bool recording;
-	bool encoderShutdown;
-    bool recorderShutdown;
-	void incrementTake();
-    //start converting the current directory
-	void compressCurrentTake();
-
-	
+    
 	ofxDepthImageCompressor compressor;
 	ofxRGBDRecorderThread recorderThread;
 	ofxRGBDEncoderThread encoderThread;
+    
+	bool recording;
 	
-	ofImage compressedDepthImage;
-
+    void incrementTake();
+    
+    //start converting the current directory
+    vector<Take> takes;
+	void compressCurrentTake();
+	void updateTakes();
+	int compressingTakeIndex;    
+    
 	int framesToCompress;
 	
 	unsigned short* encodingBuffer;
 	unsigned short* lastFramePixs;
-
-	
 	
 	int folderCount;
     string currentFolderPrefix;
@@ -92,5 +96,6 @@ class ofxDepthImageRecorder {
 	int currentFrame;
 	
 	queue<QueuedFrame> saveQueue;
-	queue<string> encodeDirectories;
+	//queue<string> encodeDirectories;
+    queue<Take*> encodeDirectories;
 };

@@ -14,7 +14,6 @@ ofxRGBDCaptureGui::ofxRGBDCaptureGui(){
 
 void ofxRGBDCaptureGui::setup(){
     
-    
 	currentTab = TabCalibrate;
     
 	downColor  = ofColor(255, 120, 0);
@@ -30,66 +29,52 @@ void ofxRGBDCaptureGui::setup(){
 	btnSetDirectory = new ofxMSAInteractiveObjectWithDelegate();
 	btnSetDirectory->setPosAndSize(0, 0, framewidth, btnheight);
 	btnSetDirectory->setLabel("Load Directory");
-	btnSetDirectory->setIdleColor(idleColor);
-	btnSetDirectory->setDownColor(downColor);
-	btnSetDirectory->setHoverColor(hoverColor);
-	btnSetDirectory->setDelegate(this);
-	
+	buttonSet.push_back(btnSetDirectory);
+    
 	btnCalibrateTab = new ofxMSAInteractiveObjectWithDelegate();
 	btnCalibrateTab->setPosAndSize(0, btnheight, thirdWidth, btnheight);
 	btnCalibrateTab->setLabel("Calibrate");
-	btnCalibrateTab->setIdleColor(idleColor);
-	btnCalibrateTab->setDownColor(downColor);
-	btnCalibrateTab->setHoverColor(hoverColor);
-	btnCalibrateTab->setDelegate(this);
+	buttonSet.push_back(btnCalibrateTab);
 	
 	btnRecordTab = new ofxMSAInteractiveObjectWithDelegate();
 	btnRecordTab->setPosAndSize(thirdWidth, btnheight, thirdWidth, btnheight);
 	btnRecordTab->setLabel("Record");
-	btnRecordTab->setIdleColor(idleColor);
-	btnRecordTab->setDownColor(downColor);
-	btnRecordTab->setHoverColor(hoverColor);
-	btnRecordTab->setDelegate(this);
-	
+	buttonSet.push_back(btnRecordTab);
+    
 	btnPlaybackTab = new ofxMSAInteractiveObjectWithDelegate();
 	btnPlaybackTab->setPosAndSize(thirdWidth*2, btnheight, thirdWidth, btnheight);
 	btnPlaybackTab->setLabel("Playback");
-	btnPlaybackTab->setIdleColor(idleColor);
-	btnPlaybackTab->setDownColor(downColor);
-	btnPlaybackTab->setHoverColor(hoverColor);
-	btnPlaybackTab->setDelegate(this);
-	
+	buttonSet.push_back(btnPlaybackTab);
+    
 	btnRenderBW = new ofxMSAInteractiveObjectWithDelegate();
 	btnRenderBW->setPosAndSize(0, btnheight*2+frameheight, thirdWidth, btnheight);
 	btnRenderBW->setLabel("Blaick&White");
-	btnRenderBW->setIdleColor(idleColor);
-	btnRenderBW->setDownColor(downColor);
-	btnRenderBW->setHoverColor(hoverColor);
-	btnRenderBW->setDelegate(this);
-	
+	buttonSet.push_back(btnRenderBW);
+    
 	btnRenderRainbow = new ofxMSAInteractiveObjectWithDelegate();
 	btnRenderRainbow->setPosAndSize(thirdWidth, btnheight*2+frameheight, thirdWidth, btnheight);
 	btnRenderRainbow->setLabel("Rainbow");
-	btnRenderRainbow->setIdleColor(idleColor);
-	btnRenderRainbow->setDownColor(downColor);
-	btnRenderRainbow->setHoverColor(hoverColor);
-	btnRenderRainbow->setDelegate(this);
-	
+	buttonSet.push_back(btnRenderRainbow);
+    
 	btnRenderPointCloud = new ofxMSAInteractiveObjectWithDelegate();
 	btnRenderPointCloud->setPosAndSize(thirdWidth*2, btnheight*2+frameheight, thirdWidth, btnheight);
 	btnRenderPointCloud->setLabel("Pointcloud");
-	btnRenderPointCloud->setIdleColor(idleColor);
-	btnRenderPointCloud->setDownColor(downColor);
-	btnRenderPointCloud->setHoverColor(hoverColor);
-	btnRenderPointCloud->setDelegate(this);
-	
+	buttonSet.push_back(btnRenderPointCloud);
+    
 	btnRecordBtn = new ofxMSAInteractiveObjectWithDelegate();
 	btnRecordBtn->setPosAndSize(0, btnheight*3+frameheight, framewidth, btnheight);
 	btnRecordBtn->setLabel("Record");
-	btnRecordBtn->setIdleColor(idleColor);
-	btnRecordBtn->setDownColor(downColor);
-	btnRecordBtn->setHoverColor(hoverColor);
-	btnRecordBtn->setDelegate(this);
+    buttonSet.push_back(btnRecordBtn);
+    
+    for(int i = 0; i < buttonSet.size(); i++){
+        buttonSet[i]->setIdleColor(idleColor);
+        buttonSet[i]->setDownColor(downColor);
+        buttonSet[i]->setHoverColor(hoverColor);
+        buttonSet[i]->disableKeyEvents();
+        buttonSet[i]->setDelegate(this);
+    }
+    
+    previewRect = ofRectangle(0, btnheight*2, 640, 480);
     
 	calibrationPreview.setup(10, 7, 2.5);
 	alignment.setup(10, 7, 2.5);
@@ -118,15 +103,16 @@ void ofxRGBDCaptureGui::setup(){
 	cam.speed = 25;
 	cam.setFarClip(50000);
     
-	recorder.setup();
     
     ofRegisterMouseEvents(this);
-    ofRegisterKeyEvents(this);
-    
+    ofRegisterKeyEvents(this);    
     ofAddListener(ofEvents.windowResized, this, &ofxRGBDCaptureGui::windowResized);
    // ofAddListener(ofEvents.exit, this, &ofxRGBDCaptureGui::exit);
     ofAddListener(ofEvents.update, this, &ofxRGBDCaptureGui::update);
     ofAddListener(ofEvents.draw, this, &ofxRGBDCaptureGui::draw);
+    
+    recorder.setup();
+
 }
 
 void ofxRGBDCaptureGui::setImageProvider(ofxDepthImageProvider* imageProvider){
@@ -164,8 +150,7 @@ void ofxRGBDCaptureGui::draw(ofEventArgs& args){
 	}
     
 	if(currentTab == TabCalibrate){
-		//recordImage.draw(0, btnheight*2, 640, 480);
-		depthImageProvider->getRawIRImage().draw(0, btnheight*2, 640, 480);
+		depthImageProvider->getRawIRImage().draw(previewRect);
 		calibrationPreview.draw(0, btnheight*2);
 		alignment.drawDepthImages();
 	}
@@ -176,11 +161,11 @@ void ofxRGBDCaptureGui::draw(ofEventArgs& args){
 		ofLine(320, btnheight*2, 320, btnheight*2+480);
 		ofLine(0, btnheight*2+240, 640, btnheight*2+240);
 		ofPopStyle();
-		depthImageProvider->getDepthImage().draw(0, btnheight*2, 640, 480);
+		depthImageProvider->getDepthImage().draw(previewRect);
 	}
 	else {
 		if(currentRenderMode == RenderBW || currentRenderMode == RenderRainbow){
-			depthSequence.currentDepthImage.draw(0, btnheight*2, 640, 480);
+			depthSequence.currentDepthImage.draw(previewRect);
 		}
 		else {
 			if(depthSequence.currentDepthRaw != NULL){
@@ -192,6 +177,29 @@ void ofxRGBDCaptureGui::draw(ofEventArgs& args){
 		timeline.draw();
 	}
     
+    //-- -- -- -- -- -- - 
+    for(int i = 0; i < btnTakes.size(); i++){
+    	if(btnTakes[i].isSelected){
+        	ofPushStyle();
+            ofSetColor(timeline.getColors().highlightColor);
+            ofRectangle highlighRect(btnTakes[i].button->x,btnTakes[i].button->y,
+                                     btnTakes[i].button->width, btnTakes[i].button->height*.25);
+                                     
+            ofRect(highlighRect);
+            ofPopStyle();
+        }
+    	
+        ofPushStyle();
+        ofSetColor(timeline.getColors().disabledColor);
+        float percentComplete = float(btnTakes[i].takeRef->framesConverted) / float(btnTakes[i].takeRef->numFrames);
+        float processedWidth = btnTakes[i].button->width*percentComplete;
+        ofRectangle highlighRect(btnTakes[i].button->x + processedWidth,
+                                 btnTakes[i].button->y,
+                                 btnTakes[i].button->width-processedWidth, btnTakes[i].button->height);
+        ofRect(highlighRect);
+        ofPopStyle();
+    }
+    
 	//draw save meter if buffer is getting full
 	if(recorder.isRecording()){
 		ofPushStyle();
@@ -199,7 +207,7 @@ void ofxRGBDCaptureGui::draw(ofEventArgs& args){
 		ofNoFill();
 		ofSetLineWidth(5);
 		
-		ofRect(0, btnheight*2, 640, 480);
+		ofRect(previewRect);
 		ofPopStyle();
 	}
 	
@@ -257,17 +265,22 @@ void ofxRGBDCaptureGui::objectDidRelease(ofxMSAInteractiveObject* object, int x,
 	}
 	else {
 		for(int i = 0; i < btnTakes.size(); i++){
-			if(object == btnTakes[i]){
-				loadSequenceForPlayback( i );
+			if(object == btnTakes[i].button){
+				loadSequenceForPlayback( i );                
+                for(int b = 0; b < btnTakes.size(); b++){
+                	btnTakes[b].isSelected = b == i;
+                }
+                break;
 			}
 		}
 	}
 }
 
 void ofxRGBDCaptureGui::exit(){
-   	recorder.shutdown();
+    //causes crashing...
+//  recorder.shutdown();
     if(providerSet){
-		depthImageProvider->close();
+//		depthImageProvider->close();
         providerSet = false; 
     } 
 }
@@ -277,7 +290,7 @@ void ofxRGBDCaptureGui::mousePressed(ofMouseEventArgs& args){
 }
 
 void ofxRGBDCaptureGui::mouseMoved(ofMouseEventArgs& args){
-    
+    cam.usemouse = fullscreenPoints || previewRect.inside(args.x, args.y);
 }
 
 void ofxRGBDCaptureGui::mouseDragged(ofMouseEventArgs& args){
@@ -314,37 +327,27 @@ void ofxRGBDCaptureGui::keyPressed(ofKeyEventArgs& args){
 	if(key == 'p'){
 		fullscreenPoints = !fullscreenPoints;
 		if(fullscreenPoints){
-			btnSetDirectory->disableAllEvents();
-            
-			btnCalibrateTab->disableAllEvents();
-			btnRecordTab->disableAllEvents();
-			btnPlaybackTab->disableAllEvents();
-			
-			btnRecordBtn->disableAllEvents();
-			
-			btnRenderBW->disableAllEvents();
-			btnRenderRainbow->disableAllEvents();
-			btnRenderPointCloud->disableAllEvents();
-			
-			for(int i = 0; i < btnTakes.size(); i++) btnTakes[i]->disableAllEvents();
+            for(int i = 0; i < buttonSet.size(); i++){
+                buttonSet[i]->disableAppEvents();
+                buttonSet[i]->disableMouseEvents();
+            }
+            for(int i = 0; i < btnTakes.size(); i++){
+             	btnTakes[i].button->disableAppEvents();   
+                btnTakes[i].button->disableMouseEvents();   
+            }
 			ofHideCursor();
 		}
 		else{
-			btnSetDirectory->enableAllEvents();
-			
-			btnCalibrateTab->enableAllEvents();
-			btnRecordTab->enableAllEvents();
-			btnPlaybackTab->enableAllEvents();
-			
-			btnRecordBtn->enableAllEvents();
-			
-			btnRenderBW->enableAllEvents();
-			btnRenderRainbow->enableAllEvents();
-			btnRenderPointCloud->enableAllEvents();
-			
-			for(int i = 0; i < btnTakes.size(); i++) btnTakes[i]->enableAllEvents();
+            for(int i = 0; i < buttonSet.size(); i++){
+                buttonSet[i]->enableMouseEvents();
+                buttonSet[i]->enableAppEvents();
+            }
+			for(int i = 0; i < btnTakes.size(); i++){
+             	btnTakes[i].button->enableMouseEvents();
+                btnTakes[i].button->enableAppEvents();
+            }
             
-			ofShowCursor();
+			ofShowCursor();			
 		}
 	}   
 }
@@ -354,6 +357,11 @@ void ofxRGBDCaptureGui::keyReleased(ofKeyEventArgs& args){
 }
 
 void ofxRGBDCaptureGui::loadDirectory(){
+    if(recorder.numFramesWaitingCompession() != 0){
+    	ofSystemAlertDialog("Cannot change directory while files are converting");
+		return;
+    }
+    
 	ofFileDialogResult r = ofSystemLoadDialog("Select Record Directory", true);
 	if(r.bSuccess){
 		loadDirectory(r.getPath());
@@ -378,9 +386,7 @@ void ofxRGBDCaptureGui::loadDirectory(string path){
 }
 
 void ofxRGBDCaptureGui::loadSequenceForPlayback( int index ){
-	vector<string> paths = recorder.getTakePaths();
-	//TODO add timeline stuff in here;
-	depthSequence.loadSequence(paths[index]);
+    depthSequence.loadSequence( recorder.getTakes()[index].path );
 	timeline.setDurationInFrames(depthSequence.videoThumbs.size());
 }
 
@@ -391,42 +397,52 @@ void ofxRGBDCaptureGui::toggleRecord(){
 
 //--------------------------------------------------------------
 void ofxRGBDCaptureGui::captureCalibrationImage(){
-	char filename[1024];
-	sprintf(filename, "%s/calibration/calibration_image_%02d_%02d_%02d_%02d_%02d.png", workingDirectory.c_str(), ofGetMonth(), ofGetDay(), ofGetHours(), ofGetMinutes(), ofGetSeconds());
-	//jg conv ofSaveImage( calibrationImage, filename);
-	ofSaveImage( depthImageProvider->getRawIRImage(), filename);
-	alignment.addDepthCalibrationImage(filename);
-	alignment.generateAlignment();
-	alignment.saveState();
+    if(calibrationPreview.hasFoundBoard()){
+
+        char filename[1024];
+        sprintf(filename, "%s/calibration/calibration_image_%02d_%02d_%02d_%02d_%02d.png", workingDirectory.c_str(), ofGetMonth(), ofGetDay(), ofGetHours(), ofGetMinutes(), ofGetSeconds());
+        //jg conv ofSaveImage( calibrationImage, filename);
+        ofSaveImage( depthImageProvider->getRawIRImage(), filename);
+        alignment.addDepthCalibrationImage(filename);
+        alignment.generateAlignment();
+        alignment.saveState();
+    }
 }
 
 //--------------------------------------------------------------
 void ofxRGBDCaptureGui::updateTakeButtons(){
-	vector<string> files = recorder.getTakePaths();
+	vector<Take>& takes = recorder.getTakes();
 	
 	for(int i = 0; i < btnTakes.size(); i++){
-		delete btnTakes[i];
+		delete btnTakes[i].button;
 	}
+    
 	btnTakes.clear();
 	
-	for(int i = 0; i < files.size(); i++){
+	for(int i = 0; i < takes.size(); i++){
+        TakeButton tb;
+        tb.isSelected = false;
+        tb.takeRef = &takes[i];
+        
 		ofxMSAInteractiveObjectWithDelegate* btnTake = new ofxMSAInteractiveObjectWithDelegate();		
 		float x = framewidth;
-		float y = btnheight/2*i;
+		float y = btnheight*.66*i;
 		while(y >= btnheight*3+frameheight){
 			y -= btnheight*3+frameheight;
 			x += thirdWidth;
 		}
 		
-		btnTake->setPosAndSize(x, y, thirdWidth, btnheight/2);
-		btnTake->setLabel( ofFilePath::getFileName(files[i]) );
+		btnTake->setPosAndSize(x, y, thirdWidth, btnheight*.66);
+		btnTake->setLabel( ofFilePath::getFileName(takes[i].path) );
 		btnTake->setIdleColor(idleColor);
 		btnTake->setDownColor(downColor);
 		btnTake->setHoverColor(hoverColor);
 		btnTake->setDelegate(this);
-		btnTake->enableAllEvents();
-		
-		btnTakes.push_back( btnTake );
+        btnTake->enableMouseEvents();
+        btnTake->disableKeyEvents();
+        
+		tb.button = btnTake;
+		btnTakes.push_back( tb );
 	}
 }
 
@@ -434,9 +450,10 @@ void ofxRGBDCaptureGui::drawPointcloud(bool fullscreen){
 
 	glEnable(GL_DEPTH_TEST);
 	ofMesh mesh;
-	ofRectangle rect = fullscreen ? ofRectangle(0,0, ofGetWidth(), ofGetHeight()) : ofRectangle(0, btnheight*2, 640, 480);
-
-	glPointSize(4);
+	ofRectangle rect = fullscreen ? ofRectangle(0,0, ofGetWidth(), ofGetHeight()) : previewRect;
+    //glEnable(GL_POINT_SMOOTH);
+    //glEnable(GL_VERTEX_PROGRAM_POINT_SIZE_ARB);	// allows per-point size
+    glPointSize(2);
 	for(int y = 0; y < 480; y++){
 		for(int x = 0; x < 640; x++){
 			//0.104200 ref dist 120.000000

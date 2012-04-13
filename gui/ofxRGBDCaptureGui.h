@@ -30,6 +30,12 @@ typedef enum {
 	RenderPointCloud
 } DepthRenderMode;
 
+typedef struct {
+	Take* takeRef;
+    ofxMSAInteractiveObjectWithDelegate* button;
+    bool isSelected;
+} TakeButton;
+
 class ofxRGBDCaptureGui : public ofxMSAInteractiveObjectDelegate {
   public:
 	ofxRGBDCaptureGui();
@@ -59,7 +65,12 @@ class ofxRGBDCaptureGui : public ofxMSAInteractiveObjectDelegate {
     void exit();
     
   protected:
-    
+    ofxTimeline timeline;
+	ofxTLDepthImageSequence depthSequence;
+	ofxRGBDAlignment alignment;
+	ofxDepthImageRecorder recorder;
+	ofxCvCheckerboardPreview calibrationPreview;
+
 	void loadDirectory();
 	void loadDirectory(string path);
 	void loadSequenceForPlayback( int index );
@@ -85,6 +96,8 @@ class ofxRGBDCaptureGui : public ofxMSAInteractiveObjectDelegate {
 	float btnheight;
 	float takeWidth;
 	
+    vector<ofxMSAInteractiveObjectWithDelegate*> buttonSet; //all non take buttons
+    
 	ofxMSAInteractiveObjectWithDelegate* btnSetDirectory;
 	
 	ofxMSAInteractiveObjectWithDelegate* btnCalibrateTab;
@@ -97,15 +110,11 @@ class ofxRGBDCaptureGui : public ofxMSAInteractiveObjectDelegate {
 	ofxMSAInteractiveObjectWithDelegate* btnRenderRainbow;
 	ofxMSAInteractiveObjectWithDelegate* btnRenderPointCloud;
     
-	vector<ofxMSAInteractiveObjectWithDelegate*> btnTakes;
+	vector<TakeButton> btnTakes;
 	
 	ofxGameCamera cam;
 	
-	ofxTimeline timeline;
-	ofxTLDepthImageSequence depthSequence;
-	ofxRGBDAlignment alignment;
-	ofxDepthImageRecorder recorder;
-	ofxCvCheckerboardPreview calibrationPreview;
+    ofRectangle previewRect;
     
 	RecorderTab currentTab;	
 	DepthRenderMode currentRenderMode;

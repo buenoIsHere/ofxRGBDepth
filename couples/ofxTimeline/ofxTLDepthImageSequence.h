@@ -66,7 +66,6 @@ class ofxTLDepthImageSequence : public ofxTLElement {
 	
 	bool doFramesHaveTimestamps();
 
-	
   protected:
 	bool framesHaveTimestamps;
 	

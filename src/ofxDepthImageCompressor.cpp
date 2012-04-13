@@ -26,6 +26,7 @@ bool ofxDepthImageCompressor::saveToRaw(string filename, unsigned short* buf){
 
 void ofxDepthImageCompressor::saveToCompressedPng(string filename, unsigned short* buf){
 	if(!compressedDepthImage.isAllocated()){
+        compressedDepthImage.setUseTexture(false);
 		compressedDepthImage.allocate(640, 480, OF_IMAGE_COLOR);
 	}
 

@@ -48,6 +48,10 @@ void ofxTLDepthImageSequence::disable(){
 }
 
 void ofxTLDepthImageSequence::update(ofEventArgs& args){
+    if(!sequenceLoaded || timeline == NULL){
+    	return;
+    }
+    
 	//if we are on a timebased timeline and our frames have timestamps
 	//prefer selecting based on the time as we'll get more accurate playback speeds
 	if(!timeline->getIsFrameBased() && framesHaveTimestamps){ 
@@ -63,9 +67,16 @@ void ofxTLDepthImageSequence::draw(){
 	if(getDrawRect().height < 10){
 		return;
 	}
+    
+    if(!sequenceLoaded){
+		ofPushStyle();
+        ofSetColor(timeline->getColors().disabledColor);
+        ofRect(getDrawRect());
+        ofPopStyle();
+        return;
+    }
 	
 	ofPushStyle();
-
 	if(thumbsEnabled){
 		ofSetColor(255);
 		for(int i = 0; i < videoThumbs.size(); i++){
@@ -173,6 +184,10 @@ long ofxTLDepthImageSequence::getSelectedTimeInMillis(){
 
 int ofxTLDepthImageSequence::frameForTime(long timeInMillis){
 	
+    if(!sequenceLoaded){
+    	return 0;
+    }
+    
 	if(!framesHaveTimestamps){
 		ofLogError("ofxTLDepthImageSequence -- can't select frame for time if there are no timestamps");
 		return 0;
@@ -265,19 +280,22 @@ bool ofxTLDepthImageSequence::loadSequence(string seqdir){
 	cout << "sequence is loaded " << videoThumbs.size() << endl;
 	
 	sequenceLoaded = true;
-	
 	videoThumbs[0].visible = true;
 	
 	generateThumbnailForFrame(0);
-	cout << "calculating frame positions" << endl;
+//	cout << "calculating frame positions" << endl;
 	calculateFramePositions();
-	cout << "generating thumbnails" << endl;
-//	generateVideoThumbnails();
+//	cout << "generating thumbnails" << endl;
+	generateVideoThumbnails();
 	return true;
 }
 
 void ofxTLDepthImageSequence::calculateFramePositions(){
+    
+//    cout << "calculating frame positions" << endl;
+    
 	if(timeline == NULL){
+        ofLogError("ofxTLDepthImageSequence -- timeline is null!");
 		return;
 	}
 	
@@ -290,8 +308,6 @@ void ofxTLDepthImageSequence::calculateFramePositions(){
 	int framesToShow = MAX(totalPixels / frameWidth, 1);
 	int frameStep = MAX(videoThumbs.size() / framesToShow, 1); 
 	int minPixelIndex = -(zoomBounds.min * totalPixels);
-	
-	//cout << "bounds are " << bounds.width << " " << bounds.height << " frameWidth " << frameWidth << " total pixels " << totalPixels << " frame step " << frameStep << " minpix " << minPixelIndex << endl;
 	
 	for(int i = 0; i < videoThumbs.size(); i++){
 		if(i % frameStep == 0){
@@ -323,7 +339,6 @@ void ofxTLDepthImageSequence::generateThumbnailForFrame(int i){
 		}
 	}
 }
-
 
 void ofxTLDepthImageSequence::toggleThumbs(){
 	thumbsEnabled = !thumbsEnabled;
