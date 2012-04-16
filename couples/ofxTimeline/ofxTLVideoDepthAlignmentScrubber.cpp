@@ -35,24 +35,27 @@ void ofxTLVideoDepthAlignmentScrubber::draw(){
 	}
 		
 	ofPushStyle();
-	vector<VideoDepthPair> & alignedFrames = pairSequence.getPairs();
+	vector<VideoDepthPair>& alignedFrames = pairSequence.getPairs();
 	for(int i = 0; i < alignedFrames.size(); i++){
 		int videoFrame;
 		if(depthSequence->doFramesHaveTimestamps()){
-			videoFrame = videoSequence->getPlayer().getTotalNumFrames() * alignedFrames[i].videoFrame / (videoSequence->getPlayer().getDuration()*1000.0);
+            float videoPercent = alignedFrames[i].videoFrame / (videoSequence->getPlayer().getDuration()*1000.0);
+			videoFrame = videoPercent * videoSequence->getPlayer().getTotalNumFrames();
 		}
 		else{
 			videoFrame = alignedFrames[i].videoFrame;
 		}
+        
 		int screenX = screenXForIndex( videoFrame );
 		if(i == selectedPairIndex){
 			ofSetColor(timeline->getColors().textColor);
 		}
 		else{
-			ofSetColor(timeline->getColors().highlightColor);
+			ofSetColor(timeline->getColors().keyColor);
 		}
 		
-		ofLine(screenX, bounds.y, screenX, bounds.y+bounds.height);
+		ofLine(screenX, bounds.y, 
+               screenX, bounds.y+bounds.height);
 		ofDrawBitmapString("video: " + ofToString(alignedFrames[i].videoFrame), ofPoint(screenX+10, bounds.y+15));
 		ofDrawBitmapString("depth: " + ofToString(alignedFrames[i].depthFrame), ofPoint(screenX+10, bounds.y+35));
 	}
@@ -130,7 +133,10 @@ void ofxTLVideoDepthAlignmentScrubber::mouseReleased(ofMouseEventArgs& args){
 
 void ofxTLVideoDepthAlignmentScrubber::registerCurrentAlignment(){
 	if(depthSequence->doFramesHaveTimestamps()){
-		pairSequence.addAlignedTime(long(1000*videoSequence->getCurrentTime()), depthSequence->getSelectedTimeInMillis());
+        double videoSeconds = videoSequence->getCurrentTime();
+        long depthMillis = depthSequence->getSelectedTimeInMillis();
+        cout << "video seconds " << videoSeconds << "  " << depthMillis << endl;
+		pairSequence.addAlignedTime(long(1000*videoSeconds), depthMillis);
 	}
 	else{
 		pairSequence.addAlignedFrames(videoSequence->getSelectedFrame(), depthSequence->getSelectedFrame());
@@ -158,13 +164,12 @@ void ofxTLVideoDepthAlignmentScrubber::save(){
 		ofLogError("ofxTLVideoDepthAlignmentScrubber -- saving with no save file");
 		return;
 	}
-
 	pairSequence.savePairingFile(xmlFileName);
-
 }
 
 void ofxTLVideoDepthAlignmentScrubber::load(){
 	if(xmlFileName == ""){
+        pairSequence.reset();
 		ofLogError("ofxTLVideoDepthAlignmentScrubber -- loading no save file");
 		return;
 	}

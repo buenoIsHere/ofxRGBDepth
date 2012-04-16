@@ -33,12 +33,14 @@ ofxRGBDRenderer::ofxRGBDRenderer(){
 
 	hasDepthImage = false;
 	hasRGBImage = false;
-
+	mirror = false;
+    
 	farClip = 5000;
 	fadeToWhite = 0.0;
 	useCustomShader = false;
-
+    //rotateMeshX = 0;
 	ZFuzz = 0;
+    meshRotate = ofVec3f(0,0,0);
 	
 }
 
@@ -47,8 +49,6 @@ ofxRGBDRenderer::~ofxRGBDRenderer(){
 }
 
 bool ofxRGBDRenderer::setup(string calibrationDirectory){
-	
-	cout << "setting up renderer " << endl;
 	
 	if(!ofDirectory(calibrationDirectory).exists()){
 		ofLogError("ofxRGBDRenderer --- Calibration directory doesn't exist: " + calibrationDirectory);
@@ -174,12 +174,12 @@ void ofxRGBDRenderer::update(){
 			if(z != 0 && z < farClip){
 				float xReal,yReal;
 				if(mirror){
-					xReal = (((float) principalPoint.x - x + xmult ) / imageSize.width) * z * fx/* + xshift*/;
+					xReal = (((float) principalPoint.x - x - xmult ) / imageSize.width) * z * fx;
 				}
 				else{
-					xReal = (((float) x - principalPoint.x + xmult ) / imageSize.width) * z * fx/* + xshift*/;
+					xReal = (((float) x - principalPoint.x + xmult ) / imageSize.width) * z * fx;
 				}
-				yReal = (((float) y - principalPoint.y + ymult ) / imageSize.height) * z * fy/* + yshift*/;
+				yReal = (((float) y - principalPoint.y + ymult ) / imageSize.height) * z * fy;
 				indx.vertexIndex = simpleMesh.getVertices().size();
 				indx.valid = true;
 				if(ZFuzz != 0){
@@ -274,9 +274,12 @@ void ofxRGBDRenderer::drawMesh() {
 	
 	if(!hasDepthImage) return;
 	
-	glPushMatrix();
-	glScaled(1, -1, 1);
-	glRotatef(rotateMeshX, 1, 0, 0);
+	//glPushMatrix();
+    ofPushMatrix();
+    ofScale(1, -1, 1);
+    ofRotate(meshRotate.x,1,0,0);
+    ofRotate(meshRotate.y,0,1,0);
+    ofRotate(meshRotate.z,0,0,1);
 	
 	glEnable(GL_DEPTH_TEST);
 	if(hasRGBImage){
@@ -289,16 +292,19 @@ void ofxRGBDRenderer::drawMesh() {
     
 	glDisable(GL_DEPTH_TEST);
 	
-	glPopMatrix();
+	ofPopMatrix();
 }
 
 void ofxRGBDRenderer::drawPointCloud() {
 	
 	if(!hasDepthImage) return;
 	
-	glPushMatrix();
-	glScaled(1, -1, 1);
-	glRotatef(rotateMeshX, 1, 0, 0);
+    ofPushMatrix();
+    ofScale(1, -1, 1);
+    ofRotate(meshRotate.x,1,0,0);
+    ofRotate(meshRotate.y,0,1,0);
+    ofRotate(meshRotate.z,0,0,1);
+    
     glEnable(GL_DEPTH_TEST);
 	if(hasRGBImage){
 		currentRGBImage->getTextureReference().bind();
@@ -312,16 +318,18 @@ void ofxRGBDRenderer::drawPointCloud() {
     
 	glDisable(GL_DEPTH_TEST);
 	
-	glPopMatrix();
+	ofPopMatrix();
 }
 
 void ofxRGBDRenderer::drawWireFrame() {
 	
 	if(!hasDepthImage) return;
 	
-	glPushMatrix();
-	glScaled(1, -1, 1);
-	glRotatef(rotateMeshX, 1, 0, 0);
+    ofPushMatrix();
+    ofScale(1, -1, 1);
+    ofRotate(meshRotate.x,1,0,0);
+    ofRotate(meshRotate.y,0,1,0);
+    ofRotate(meshRotate.z,0,0,1);
 	
 	glEnable(GL_DEPTH_TEST);
 	if(hasRGBImage){
@@ -334,7 +342,7 @@ void ofxRGBDRenderer::drawWireFrame() {
     
 	glDisable(GL_DEPTH_TEST);
 	
-	glPopMatrix();	
+	ofPopMatrix();
 }
 
 ofTexture& ofxRGBDRenderer::getTextureReference(){

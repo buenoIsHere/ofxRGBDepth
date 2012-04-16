@@ -28,7 +28,9 @@ class ofxRGBDVideoDepthSequence {
 	bool loadPairingFile(string pairFileXml);
 	
 	bool ready();
-	void addAlignedFrames(int videoFrame, int depthFrame);
+	void reset();
+    
+    void addAlignedFrames(int videoFrame, int depthFrame);
 	void addAlignedTime(int videoMillis, int depthMillis);
 	void addAlignedPair(VideoDepthPair pair);
 	

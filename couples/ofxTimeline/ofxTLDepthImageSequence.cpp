@@ -17,6 +17,11 @@ ofxTLDepthImageSequence::ofxTLDepthImageSequence(){
 	selectedFrame = 0;
 	thumbsEnabled = true;
 	framesHaveTimestamps = false;
+    thumbnailUpdatedZoomLevel = -1;
+    thumbnailUpdatedWidth = -1;
+    thumbnailUpdatedHeight = -1;
+    currentlyZooming = false;
+
 }
 
 ofxTLDepthImageSequence::~ofxTLDepthImageSequence(){
@@ -63,9 +68,16 @@ void ofxTLDepthImageSequence::draw(){
 	if(getDrawRect().height < 10){
 		return;
 	}
-	
-	ofPushStyle();
+    
+    calculateFramePositions();
+	if(thumbsEnabled && !ofGetMousePressed() && 
+       (thumbnailUpdatedZoomLevel != zoomBounds ||
+       	thumbnailUpdatedWidth != getDrawRect().width ||
+        thumbnailUpdatedHeight != getDrawRect().height) ) {
+		generateVideoThumbnails();	
+	}
 
+	ofPushStyle();
 	if(thumbsEnabled){
 		ofSetColor(255);
 		for(int i = 0; i < videoThumbs.size(); i++){
@@ -92,12 +104,16 @@ void ofxTLDepthImageSequence::draw(){
 	int selectedFrameX = screenXForIndex(selectedFrame, videoThumbs.size());
 	ofSetColor(0, 125, 255);
 	ofLine(selectedFrameX, bounds.y, selectedFrameX, bounds.y+bounds.height);
-	ofDrawBitmapString(ofToString(selectedFrame), selectedFrameX, bounds.y+35);
+	ofDrawBitmapString("frame " + ofToString(selectedFrame), selectedFrameX, bounds.y+30);
+    if(framesHaveTimestamps){
+        ofDrawBitmapString("second " + ofToString(videoThumbs[selectedFrame].timestamp/1000.0), selectedFrameX, bounds.y+48);
+    }
 	
 	ofPopStyle();
 }
 
 void ofxTLDepthImageSequence::zoomStarted(ofxTLZoomEventArgs& args){
+    currentlyZooming = true;
 	ofxTLElement::zoomStarted(args);
 	calculateFramePositions();
 }
@@ -108,6 +124,7 @@ void ofxTLDepthImageSequence::zoomDragged(ofxTLZoomEventArgs& args){
 }
 
 void ofxTLDepthImageSequence::zoomEnded(ofxTLZoomEventArgs& args){
+    currentlyZooming = false;
 	ofxTLElement::zoomEnded(args);
 	calculateFramePositions();
 	if(thumbsEnabled){
@@ -264,6 +281,10 @@ bool ofxTLDepthImageSequence::loadSequence(string seqdir){
 	
 	cout << "sequence is loaded " << videoThumbs.size() << endl;
 	
+    //only generate if we already had a sequence loaded.
+    if(sequenceLoaded){
+        generateVideoThumbnails();
+    }
 	sequenceLoaded = true;
 	
 	videoThumbs[0].visible = true;
@@ -272,7 +293,6 @@ bool ofxTLDepthImageSequence::loadSequence(string seqdir){
 	cout << "calculating frame positions" << endl;
 	calculateFramePositions();
 	cout << "generating thumbnails" << endl;
-//	generateVideoThumbnails();
 	return true;
 }
 
@@ -306,6 +326,9 @@ void ofxTLDepthImageSequence::calculateFramePositions(){
 }
 
 void ofxTLDepthImageSequence::generateVideoThumbnails() {
+    thumbnailUpdatedZoomLevel = zoomBounds;
+    thumbnailUpdatedWidth = getDrawRect().width;
+	thumbnailUpdatedHeight = getDrawRect().height; 
 	for(int i = 0; i < videoThumbs.size(); i++){
 		generateThumbnailForFrame(i);
 	}
@@ -323,7 +346,6 @@ void ofxTLDepthImageSequence::generateThumbnailForFrame(int i){
 		}
 	}
 }
-
 
 void ofxTLDepthImageSequence::toggleThumbs(){
 	thumbsEnabled = !thumbsEnabled;

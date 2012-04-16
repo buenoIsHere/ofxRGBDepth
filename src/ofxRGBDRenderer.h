@@ -58,7 +58,9 @@ class ofxRGBDRenderer {
 	bool mirror;
 	
 	
-	float rotateMeshX;
+	//float rotateMeshX;
+    ofVec3f meshRotate;
+    
 	//sets a level of simplification, 
 	//should be either 1 for none
 	//2 for half, or 4 for quarter;
