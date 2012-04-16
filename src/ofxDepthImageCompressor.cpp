@@ -54,8 +54,7 @@ unsigned short* ofxDepthImageCompressor::readDepthFrame(ofFile infile,  unsigned
         outbuf = new unsigned short[640*480];
     }
 	
-	infile.read((char*)(&outbuf[0]), sizeof(unsigned short)*640*480);
-	
+	infile.read((char*)(&outbuf[0]), sizeof(unsigned short)*640*480);	
 	infile.close();
 	return outbuf;
 }
@@ -84,6 +83,13 @@ ofImage ofxDepthImageCompressor::convertTo8BitImage(unsigned short* buf) {
 	}
 	outputImage.update();
 	return outputImage;
+}
+
+void ofxDepthImageCompressor::readCompressedPng(string filename, ofShortPixels& pix){
+	if(!pix.isAllocated()){
+        pix.allocate(640, 480, 1);
+    }
+    readCompressedPng(filename, pix.getPixels());
 }
 
 unsigned short* ofxDepthImageCompressor::readCompressedPng(string filename, unsigned short* outbuf){

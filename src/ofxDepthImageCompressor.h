@@ -19,6 +19,7 @@ class ofxDepthImageCompressor {
 	bool saveToRaw(string filename, unsigned short* buf);
 	void saveToCompressedPng(string filename, unsigned short* buf);
 	
+    void readCompressedPng(string filename, ofShortPixels& pix);
 	//DECOMPRESS
 	unsigned short* readDepthFrame(string filename, unsigned short* outbuf = NULL);
 	unsigned short* readDepthFrame(ofFile file, unsigned short*  outbuf = NULL);

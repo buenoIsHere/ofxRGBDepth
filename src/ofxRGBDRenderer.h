@@ -27,8 +27,9 @@ class ofxRGBDRenderer {
 	~ofxRGBDRenderer();
 	
 	bool setup(string calibrationDirectory);
-	
+
 	void setRGBTexture(ofBaseHasTexture& rgbTexture); 
+    void setDepthImage(ofShortPixels& pix);
 	void setDepthImage(unsigned short* depthPixelsRaw);
 
     ofBaseHasTexture& getRGBTexture();
@@ -40,23 +41,16 @@ class ofxRGBDRenderer {
 	void update();
 
 	//fudge factors to apply during alignment
-	float xshift;
-	float yshift;
 	float xmult;
 	float ymult;
-	float xscale;
-	float yscale;
-	float rotationCompensation;
-	
 	float edgeCull;
 	float farClip;
 	
 	//helps diffuse "stairstep" looking patterns by adding a bit of randomness
 	float ZFuzz;
 	
-	float fadeToWhite; //0 to 1
 	bool mirror;
-	
+    bool calibrationSetup;
 	
 	//float rotateMeshX;
     ofVec3f meshRotate;
@@ -67,7 +61,6 @@ class ofxRGBDRenderer {
 	void setSimplification(int level);
 	int getSimplification();
 	
-	bool useCustomShader;
 	void drawMesh();
 	void drawPointCloud();
 	void drawWireFrame();
@@ -79,11 +72,9 @@ class ofxRGBDRenderer {
 	Calibration& getRGBCalibration();
 	Calibration& getDepthCalibration();
 	
-  protected:
-	
-	ofShader colorShader;
-	int simplify;
+  protected:	
 
+	int simplify;
 	float xTextureScale;
 	float yTextureScale;
 
@@ -104,8 +95,5 @@ class ofxRGBDRenderer {
     vector<ofIndexType> baseIndeces;
     vector<ofVec2f> texcoords;
     vector<ofVec3f> vertices;
-	
-	ofVec3f meshCenter;
-	float meshDistance;
 	
 };

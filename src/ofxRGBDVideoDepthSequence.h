@@ -36,7 +36,8 @@ class ofxRGBDVideoDepthSequence {
 	
 	void removeAlignedPair(int index);
 
-	int getDepthFrameForVideoFrame(int videoFrame);
+    //This will return a time in milliseconds if the frames are time based
+	long getDepthFrameForVideoFrame(long videoFrame);
 	bool isSequenceTimebased();
 	
 	vector<VideoDepthPair> & getPairs();

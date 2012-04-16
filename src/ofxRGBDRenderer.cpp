@@ -17,31 +17,24 @@ typedef struct{
 
 ofxRGBDRenderer::ofxRGBDRenderer(){
 	//come up with better names
-	xshift = 0;
-	yshift = 0;
 	xmult = 0;
 	ymult = 0;
-	xscale = 1;
-	yscale = 1;
 	
 	edgeCull = 4000;
 	simplify = 1;
-	rotationCompensation = 0;
-	
-	xTextureScale = 1;
-	yTextureScale = 1;
 
+	farClip = 6000;
+	ZFuzz = 0;
+    meshRotate = ofVec3f(0,0,0);
+    
+    xTextureScale = 1;
+	yTextureScale = 1;
+    
 	hasDepthImage = false;
 	hasRGBImage = false;
 	mirror = false;
-    
-	farClip = 5000;
-	fadeToWhite = 0.0;
-	useCustomShader = false;
-    //rotateMeshX = 0;
-	ZFuzz = 0;
-    meshRotate = ofVec3f(0,0,0);
-	
+	calibrationSetup = false;
+    setSimplification(1);
 }
 
 ofxRGBDRenderer::~ofxRGBDRenderer(){
@@ -60,11 +53,9 @@ bool ofxRGBDRenderer::setup(string calibrationDirectory){
 	
 	loadMat(rotationDepthToRGB, calibrationDirectory+"/rotationDepthToRGB.yml");
 	loadMat(translationDepthToRGB, calibrationDirectory+"/translationDepthToRGB.yml");
-
-	colorShader.load("shaders/colorcontrol");
-	colorShader.setUniform1i("tex0", 0);
 	
-	setSimplification(1);
+	calibrationSetup = true;
+
 	return true;
 }
 
@@ -115,6 +106,14 @@ ofBaseHasTexture& ofxRGBDRenderer::getRGBTexture() {
     return *currentRGBImage;
 }
 
+void ofxRGBDRenderer::setDepthImage(ofShortPixels& pix){
+	currentDepthImage.setFromPixels(pix);
+	if(!undistortedDepthImage.isAllocated()){
+		undistortedDepthImage.allocate(640,480,OF_IMAGE_GRAYSCALE);
+	}
+	hasDepthImage = true;
+}
+
 void ofxRGBDRenderer::setDepthImage(unsigned short* depthPixelsRaw){
 	currentDepthImage.setFromPixels(depthPixelsRaw, 640,480, OF_IMAGE_GRAYSCALE);
 	if(!undistortedDepthImage.isAllocated()){
@@ -138,9 +137,16 @@ Calibration& ofxRGBDRenderer::getRGBCalibration(){
 
 void ofxRGBDRenderer::update(){
 	
-	if(!hasDepthImage) return;
-	
-	
+	if(!hasDepthImage){
+     	ofLogError("ofxRGBDRenderer::update() -- no depth image");
+        return;
+    }
+
+    if(!calibrationSetup){
+     	ofLogError("ofxRGBDRenderer::update() -- no calibration");
+        return;
+    }
+
 	bool debug = false;
 	
 	int w = 640;
@@ -157,7 +163,6 @@ void ofxRGBDRenderer::update(){
 	cv::Size imageSize = depthCalibration.getUndistortedIntrinsics().getImageSize();
 	
 	depthCalibration.undistort( toCv(currentDepthImage), toCv(undistortedDepthImage), CV_INTER_NN);
-	
 	
 	vector<IndexMap> indexMap;
 	simpleMesh.clearVertices();
@@ -194,8 +199,10 @@ void ofxRGBDRenderer::update(){
 			indexMap.push_back( indx );
 		}
 	}
+    
 	if(debug) cout << "unprojection " << simpleMesh.getVertices().size() << " took " << ofGetElapsedTimeMillis() - start << endl;
-	if(simpleMesh.getVertices().size() < 3){
+	
+    if(simpleMesh.getVertices().size() < 3){
 		ofLogError("ofxRGBDRenderer -- No verts");
 		return;
 	}
@@ -272,7 +279,15 @@ ofMesh& ofxRGBDRenderer::getMesh(){
 
 void ofxRGBDRenderer::drawMesh() {
 	
-	if(!hasDepthImage) return;
+	if(!hasDepthImage){
+     	ofLogError("ofxRGBDRenderer::update() -- no depth image");
+        return;
+    }
+    
+    if(!calibrationSetup){
+     	ofLogError("ofxRGBDRenderer::update() -- no calibration");
+        return;
+    }
 	
 	//glPushMatrix();
     ofPushMatrix();
@@ -297,7 +312,15 @@ void ofxRGBDRenderer::drawMesh() {
 
 void ofxRGBDRenderer::drawPointCloud() {
 	
-	if(!hasDepthImage) return;
+	if(!hasDepthImage){
+     	ofLogError("ofxRGBDRenderer::update() -- no depth image");
+        return;
+    }
+    
+    if(!calibrationSetup){
+     	ofLogError("ofxRGBDRenderer::update() -- no calibration");
+        return;
+    }
 	
     ofPushMatrix();
     ofScale(1, -1, 1);
@@ -323,7 +346,15 @@ void ofxRGBDRenderer::drawPointCloud() {
 
 void ofxRGBDRenderer::drawWireFrame() {
 	
-	if(!hasDepthImage) return;
+	if(!hasDepthImage){
+     	ofLogError("ofxRGBDRenderer::update() -- no depth image");
+        return;
+    }
+    
+    if(!calibrationSetup){
+     	ofLogError("ofxRGBDRenderer::update() -- no calibration");
+        return;
+    }
 	
     ofPushMatrix();
     ofScale(1, -1, 1);

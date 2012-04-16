@@ -201,6 +201,7 @@ int ofxTLDepthImageSequence::frameForTime(long timeInMillis){
 		}
 	}
 	return videoThumbs.size()-1;
+    
 }
 
 void ofxTLDepthImageSequence::mouseReleased(ofMouseEventArgs& args){
@@ -269,9 +270,9 @@ bool ofxTLDepthImageSequence::loadSequence(string seqdir){
 		
 		if(framesHaveTimestamps){
 			vector<string> split = ofSplitString(sequenceList.getName(i), "_", true, true);
-			for(int i = 0; i < split.size(); i++){
-				if(split[i] == "millis"){
-					t.timestamp = ofToInt(split[i+1]);
+			for(int l = 0; l < split.size(); l++){
+				if(split[l] == "millis"){
+					t.timestamp = ofToInt(split[l+1]);
 				}
 			}
 		}
@@ -280,19 +281,18 @@ bool ofxTLDepthImageSequence::loadSequence(string seqdir){
 	}
 	
 	cout << "sequence is loaded " << videoThumbs.size() << endl;
-	
     //only generate if we already had a sequence loaded.
     if(sequenceLoaded){
+        cout << "generating thumbnails" << endl;
         generateVideoThumbnails();
     }
 	sequenceLoaded = true;
-	
 	videoThumbs[0].visible = true;
-	
 	generateThumbnailForFrame(0);
+    
 	cout << "calculating frame positions" << endl;
 	calculateFramePositions();
-	cout << "generating thumbnails" << endl;
+	
 	return true;
 }
 
