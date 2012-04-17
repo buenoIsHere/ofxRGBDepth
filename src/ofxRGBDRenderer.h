@@ -16,7 +16,12 @@
 #pragma once
 #include "ofMain.h"
 #include "ofxCv.h"
-	
+
+typedef struct{
+	int vertexIndex;
+	bool valid;
+} IndexMap;
+
 using namespace ofxCv;
 using namespace cv;
 
@@ -51,6 +56,9 @@ class ofxRGBDRenderer {
 	bool mirror;
     bool calibrationSetup;
 	
+	void reloadShader(){
+		shader.load("shaders/unproject");
+	}
     ofVec3f meshRotate;
     
 	//sets a level of simplification, 
@@ -95,5 +103,10 @@ class ofxRGBDRenderer {
     vector<ofIndexType> baseIndeces;
     vector<ofVec2f> texcoords;
     vector<ofVec3f> vertices;
-	
+	vector<IndexMap> indexMap;
+
+	ofMatrix4x4 depthToRGBView;// = ofxCv::makeMatrix(rotationDepthToRGB, translationDepthToRGB);
+	ofMatrix4x4 rgbProjection;
+
+	ofShader shader;
 };
