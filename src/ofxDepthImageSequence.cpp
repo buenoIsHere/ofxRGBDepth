@@ -92,7 +92,6 @@ int ofxDepthImageSequence::getCurrentFrame(){
         ofLogError("ofxDepthImageSequence::getCurrentFrame() -- sequence not loaded");
         return 0;
     }
-    
 }
 
 long ofxDepthImageSequence::getCurrentMilliseconds(){

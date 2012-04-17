@@ -53,7 +53,7 @@ unsigned short* ofxDepthImageCompressor::readDepthFrame(ofFile infile,  unsigned
     if(outbuf == NULL){
         outbuf = new unsigned short[640*480];
     }
-	
+
 	infile.read((char*)(&outbuf[0]), sizeof(unsigned short)*640*480);	
 	infile.close();
 	return outbuf;

@@ -94,6 +94,31 @@ bool ofxRGBDMediaTake::loadFromFolder(string sourceMediaFolder){
 
 bool ofxRGBDMediaTake::valid(){
     return  hasCalibrationDirectory && hasDepthFolder && hasSmallVideoFile;
-
 }
 
+void ofxRGBDMediaTake::populateRenderSettings(){
+    string compDir = mediaFolder+"compositions"; 
+    ofDirectory dir(compDir);
+    if(!dir.exists()){
+        ofLogError("No comps to populate " + compDir);
+        return;
+    }
+    
+    int numComps = dir.listDir();
+    cout << "found " << numComps << endl;
+    
+    renderSettings.clear();
+    for(int i = 0; i < dir.size(); i++){
+        string renderSettingsFile = ofToDataPath(dir.getPath(i) + "/SettingsExport.xml");
+        cout << "looking for " << renderSettingsFile << endl;
+        if(ofFile(renderSettingsFile).exists()){
+            ofxRGBDRenderSettings settings;
+            settings.loadFromXml(renderSettingsFile);
+            renderSettings.push_back( settings );
+        }
+    }
+}
+
+vector<ofxRGBDRenderSettings>& ofxRGBDMediaTake::getRenderSettings() {
+    return renderSettings;
+}

@@ -16,8 +16,7 @@
 #pragma once
 #include "ofMain.h"
 #include "ofxCv.h"
-#include "ofRange.h"
-
+	
 using namespace ofxCv;
 using namespace cv;
 
@@ -52,7 +51,6 @@ class ofxRGBDRenderer {
 	bool mirror;
     bool calibrationSetup;
 	
-	//float rotateMeshX;
     ofVec3f meshRotate;
     
 	//sets a level of simplification, 
@@ -83,7 +81,9 @@ class ofxRGBDRenderer {
 
 	bool hasDepthImage;
 	bool hasRGBImage;
-	
+
+    bool calculateNormals;
+
 	ofBaseHasTexture* currentRGBImage;
 	ofShortImage currentDepthImage;
 	ofShortImage undistortedDepthImage;

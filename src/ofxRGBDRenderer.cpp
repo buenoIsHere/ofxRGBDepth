@@ -30,6 +30,8 @@ ofxRGBDRenderer::ofxRGBDRenderer(){
     xTextureScale = 1;
 	yTextureScale = 1;
     
+    calculateNormals = false;
+    
 	hasDepthImage = false;
 	hasRGBImage = false;
 	mirror = false;
@@ -226,7 +228,7 @@ void ofxRGBDRenderer::update(){
 									   indexMap[baseIndeces[i+1]].vertexIndex,
 									   indexMap[baseIndeces[i+2]].vertexIndex);
 				
-				if(calculatedNormals.find(indexMap[baseIndeces[i]].vertexIndex) == calculatedNormals.end()){
+				if(calculateNormals && calculatedNormals.find(indexMap[baseIndeces[i]].vertexIndex) == calculatedNormals.end()){
 					//calculate normal
 					simpleMesh.setNormal(indexMap[baseIndeces[i]].vertexIndex, (b-a).getCrossed(b-c).getNormalized());
 					calculatedNormals.insert(indexMap[baseIndeces[i]].vertexIndex);
@@ -258,7 +260,6 @@ void ofxRGBDRenderer::update(){
 	
 		if(debug) cout << "project points " << (ofGetElapsedTimeMillis() - start) << endl;
 		
-		
 		start = ofGetElapsedTimeMillis();
 
 		for(int i = 0; i < imagePoints.size(); i++) {
@@ -266,7 +267,8 @@ void ofxRGBDRenderer::update(){
 				simpleMesh.addTexCoord(ofVec2f( currentRGBImage->getTextureReference().getWidth() - imagePoints[i].x * xTextureScale, imagePoints[i].y * yTextureScale));
 			}
 			else{
-				simpleMesh.addTexCoord(ofVec2f( imagePoints[i].x * xTextureScale, imagePoints[i].y * yTextureScale));			
+				simpleMesh.addTexCoord(ofVec2f(imagePoints[i].x * xTextureScale, 
+                                               imagePoints[i].y * yTextureScale));			
 			}
 		}
 		if(debug) cout << "gen tex coords took " << (ofGetElapsedTimeMillis() - start) << endl;
