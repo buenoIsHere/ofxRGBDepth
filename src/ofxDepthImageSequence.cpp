@@ -11,6 +11,7 @@
 ofxDepthImageSequence::ofxDepthImageSequence(){
     sequenceLoaded = false;
     framesHaveTimestamps = false;
+//    dummy.allocate(640, 480, 1);
 
 }
 
@@ -180,14 +181,17 @@ void ofxDepthImageSequence::selectTime(long timeInMillis){
 ofShortPixels& ofxDepthImageSequence::getPixels(){
     if(!sequenceLoaded){
         ofLogError("ofxDepthImageSequence::getPixels() -- sequence not loaded");
-        return dummy;
+
     }
-    
-	if(!images[currentFrame].pix.isAllocated()){
-    	compressor.readCompressedPng(images[currentFrame].path, 
-                                     images[currentFrame].pix);
+    else {
+//	if(!images[currentFrame].pix.isAllocated()){
+    	compressor.readCompressedPng(images[currentFrame].path, pixels);
     }
-    return images[currentFrame].pix;
+    return pixels;
+}
+
+vector<DepthImage>& ofxDepthImageSequence::getImageArray(){
+    return images;
 }
 
 bool ofxDepthImageSequence::isLoaded(){

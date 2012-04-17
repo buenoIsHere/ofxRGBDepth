@@ -388,7 +388,7 @@ void ofxRGBDRenderer::drawPointCloud() {
 }
 
 void ofxRGBDRenderer::drawWireFrame() {
-	
+	glEnable(GL_DEPTH_TEST);
 	if(!hasDepthImage){
      	ofLogError("ofxRGBDRenderer::update() -- no depth image");
         return;
@@ -405,11 +405,29 @@ void ofxRGBDRenderer::drawWireFrame() {
     ofRotate(meshRotate.y,0,1,0);
     ofRotate(meshRotate.z,0,0,1);
 	
-	ofMatrix4x4 rgbMatrix = (depthToRGBView * rgbProjection).getInverse();
+    ofMatrix4x4 lookAt;
+    //lookAt.makeLookAtMatrix(ofVec3f(0,0,0), ofVec3f(0,0,-1), ofVec3f(0,1,0));
+    //lookAt.makeRotationMatrix(180, 0, 1, 0);
+    //ofMatrix4x4 yScale;
+    //yScale.makeRotationMatrix(90, 0, 0, 1.0f);
+	ofMatrix4x4 rgbMatrix = (depthToRGBView * rgbProjection);
+    
+    ofPushMatrix();
+    glMultMatrixf(rgbMatrix.getInverse().getPtr());
+    ofNoFill();
+    ofBox(2.0f);
+    
+    ofPopMatrix();
+    
+    if(ofGetKeyPressed('v'))
+        cout << "view " <<depthToRGBView << endl;
+    else if (ofGetKeyPressed('p'))
+        cout << "projection " << rgbProjection << endl;
 	//cout << rgbMatrix << endl;
-	glEnable(GL_DEPTH_TEST);
+
 	if(hasRGBImage){
 		currentRGBImage->getTextureReference().bind();
+        glPushMatrix();
 		shader.begin();	
 		GLint loc = glGetUniformLocation(shader.getProgram(), "tTex");
 		glUniformMatrix4fv( loc, 1, GL_FALSE, rgbMatrix.getPtr() );
@@ -422,6 +440,7 @@ void ofxRGBDRenderer::drawWireFrame() {
 		glMatrixMode(GL_TEXTURE);
 		glLoadMatrixf(rgbMatrix.getPtr());
 		glMatrixMode(GL_MODELVIEW);
+        glPopMatrix();
 	}
 	simpleMesh.drawWireframe();
 	if(hasRGBImage){

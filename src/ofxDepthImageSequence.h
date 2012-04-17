@@ -39,6 +39,7 @@ class ofxDepthImageSequence {
     float getDurationInSeconds();
 
     ofShortPixels& getPixels();
+    vector<DepthImage>& getImageArray();
     
   protected:
     ofxDepthImageCompressor compressor;
@@ -47,7 +48,7 @@ class ofxDepthImageSequence {
     
     vector<DepthImage> images;
     int selectedFrame;
-    ofShortPixels dummy;
+    ofShortPixels pixels;
     int currentFrame;
     
     void loadFrame(int frame);
