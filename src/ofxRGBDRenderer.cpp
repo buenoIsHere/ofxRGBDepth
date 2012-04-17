@@ -406,18 +406,13 @@ void ofxRGBDRenderer::drawWireFrame() {
     ofRotate(meshRotate.z,0,0,1);
 	
     ofMatrix4x4 lookAt;
-    //lookAt.makeLookAtMatrix(ofVec3f(0,0,0), ofVec3f(0,0,-1), ofVec3f(0,1,0));
-    //lookAt.makeRotationMatrix(180, 0, 1, 0);
-    //ofMatrix4x4 yScale;
-    //yScale.makeRotationMatrix(90, 0, 0, 1.0f);
 	ofMatrix4x4 rgbMatrix = (depthToRGBView * rgbProjection);
     
-    ofPushMatrix();
-    glMultMatrixf(rgbMatrix.getInverse().getPtr());
-    ofNoFill();
-    ofBox(2.0f);
-    
-    ofPopMatrix();
+//    ofPushMatrix();
+//    glMultMatrixf(rgbMatrix.getInverse().getPtr());
+//    ofNoFill();
+//    ofBox(2.0f);
+//    ofPopMatrix();
     
     if(ofGetKeyPressed('v'))
         cout << "view " <<depthToRGBView << endl;
