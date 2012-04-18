@@ -78,7 +78,6 @@ void ofxRGBDRenderer::setSimplification(int level){
 		simplify = 8;
 	}
 
-	indexMap.clear();
 	baseIndeces.clear();
 	int w = 640 / simplify;
 	int h = 480 / simplify;
@@ -99,13 +98,24 @@ void ofxRGBDRenderer::setSimplification(int level){
 			baseIndeces.push_back(b);
 			baseIndeces.push_back(c);
 
-			IndexMap m;
-			indexMap.push_back(m);
-			simpleMesh.addVertex(ofVec3f(0,0,0));
 		}
 	}		
-    
-    cout << "AFTER SETUP base indeces? " << baseIndeces.size() << " index map? " << indexMap.size() << endl;
+	
+	indexMap.clear();
+	simpleMesh.clearVertices();
+	for (int y = 0; y < 480; y+=simplify){
+		for (int x=0; x < 640; x+=simplify){
+			IndexMap m;
+			indexMap.push_back(m);
+		}
+	}
+
+	for (int y = 0; y < 640; y++){
+		for (int x=0; x < 480; x++){
+			simpleMesh.addVertex(ofVec3f(0,0,0));
+		}
+	}
+	cout << "AFTER SETUP base indeces? " << baseIndeces.size() << " index map? " << indexMap.size() << endl;
 }
 
 //-----------------------------------------------
@@ -183,7 +193,7 @@ void ofxRGBDRenderer::update(){
 	depthCalibration.undistort( toCv(currentDepthImage), toCv(undistortedDepthImage), CV_INTER_NN);
 	
 //	simpleMesh.clearVertices();
-	simpleMesh.clearIndices();
+
 //	simpleMesh.clearTexCoords();
 //	simpleMesh.clearNormals();
 //	indexMap.clear();
@@ -257,7 +267,8 @@ void ofxRGBDRenderer::update(){
 		ofLogError("ofxRGBDRenderer -- No verts");
 		return;
 	}
-    
+
+	simpleMesh.clearIndices();
 	set<ofIndexType> calculatedNormals;
 	start = ofGetElapsedTimeMillis();
     if(calculateNormals){

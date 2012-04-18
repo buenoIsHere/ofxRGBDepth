@@ -126,8 +126,7 @@ int ofxDepthImageSequence::frameForTime(long timeInMillis){
 		}
 	}
     
-	return images.size()-1;
-    
+	return images.size()-1;   
 }
 
 void ofxDepthImageSequence::selectFrame(int frame){
@@ -182,7 +181,6 @@ void ofxDepthImageSequence::selectTime(long timeInMillis){
 ofShortPixels& ofxDepthImageSequence::getPixels(){
     if(!sequenceLoaded){
         ofLogError("ofxDepthImageSequence::getPixels() -- sequence not loaded");
-
     }
     else {
 //	if(!images[currentFrame].pix.isAllocated()){
