@@ -11,7 +11,7 @@
 #include "ofxDepthImageCompressor.h"
 typedef struct {
     string path;
-    ofShortPixels pix;
+//    ofShortPixels pix;
     long timestamp;
     int frameNumber;
 } DepthImage;

@@ -153,6 +153,7 @@ void ofxDepthImageSequence::selectTime(float timeInSeconds){
         ofLogError("ofxDepthImageSequence::selectTime() -- no timestamps!");
         return;        
     }
+    
     if(timeInSeconds < 0 || timeInSeconds > getDurationInSeconds()){
         ofLogError("ofxDepthImageSequence::selectTime() -- time out of range!");
         return;

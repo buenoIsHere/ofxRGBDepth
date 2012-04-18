@@ -31,8 +31,13 @@ ofxRGBDRenderer::ofxRGBDRenderer(){
 	hasRGBImage = false;
 	mirror = false;
 	calibrationSetup = false;
+    
+    reloadShader();
     setSimplification(1);
-	reloadShader();
+    
+    shaderBound = false;
+    rendererBound = false;
+    
 }
 
 ofxRGBDRenderer::~ofxRGBDRenderer(){
@@ -52,8 +57,15 @@ bool ofxRGBDRenderer::setup(string calibrationDirectory){
 	loadMat(rotationDepthToRGB, calibrationDirectory+"/rotationDepthToRGB.yml");
 	loadMat(translationDepthToRGB, calibrationDirectory+"/translationDepthToRGB.yml");
 	
-	calibrationSetup = true;
+    
+    depthToRGBView = ofxCv::makeMatrix(rotationDepthToRGB, translationDepthToRGB);
 
+    ofPushView();
+    rgbCalibration.getDistortedIntrinsics().loadProjectionMatrix();
+    glGetFloatv(GL_PROJECTION_MATRIX, rgbProjection.getPtr());
+    ofPopView();
+
+    calibrationSetup = true;
 	return true;
 }
 
@@ -92,6 +104,8 @@ void ofxRGBDRenderer::setSimplification(int level){
 			simpleMesh.addVertex(ofVec3f(0,0,0));
 		}
 	}		
+    
+    cout << "AFTER SETUP base indeces? " << baseIndeces.size() << " index map? " << indexMap.size() << endl;
 }
 
 //-----------------------------------------------
@@ -140,6 +154,7 @@ Calibration& ofxRGBDRenderer::getRGBCalibration(){
 
 void ofxRGBDRenderer::update(){
 	
+    
 	if(!hasDepthImage){
      	ofLogError("ofxRGBDRenderer::update() -- no depth image");
         return;
@@ -167,11 +182,12 @@ void ofxRGBDRenderer::update(){
 	
 	depthCalibration.undistort( toCv(currentDepthImage), toCv(undistortedDepthImage), CV_INTER_NN);
 	
-	//simpleMesh.clearVertices();
+//	simpleMesh.clearVertices();
 	simpleMesh.clearIndices();
-	simpleMesh.clearTexCoords();
-	simpleMesh.clearNormals();
-	
+//	simpleMesh.clearTexCoords();
+//	simpleMesh.clearNormals();
+//	indexMap.clear();
+    
 	/*
 	int imageIndex = 0;
 	int vertexIndex = 0;
@@ -208,25 +224,29 @@ void ofxRGBDRenderer::update(){
 	int imageIndex = 0;
 	int vertexIndex = 0;
 	float xReal,yReal;
+    int indexPointer = 0;
+    int vertexPointer = 0;
 	unsigned short* ptr = undistortedDepthImage.getPixels();
 	for(int y = 0; y < h; y += simplify) {
 		for(int x = 0; x < w; x += simplify) {
-			//unsigned short z = undistortedDepthImage.getPixels()[y*w+x];
-			unsigned short z = *ptr++;
-			IndexMap& indx = indexMap[y*w+x];
+            vertexPointer = y*w+x;
+			unsigned short z = undistortedDepthImage.getPixels()[y*w+x];
+			//unsigned short z = *ptr;
+			IndexMap& indx = indexMap[indexPointer];
 			if(z != 0 && z < farClip){
 				xReal = (((float)x - principalPoint.x + xmult ) / imageSize.width) * z * fx;
 				yReal = (((float)y - principalPoint.y + ymult ) / imageSize.height) * z * fy;
 				//indx.vertexIndex = simpleMesh.getVertices().size();
-				indx.vertexIndex = y*w+x;
+                indx.vertexIndex = vertexPointer;
 				indx.valid = true;
-//				ofVec3f pt = ofVec3f(xReal, yReal, z);
+				//ofVec3f pt = ofVec3f(xReal, yReal, z);
 				//simpleMesh.addVertex(pt);
-				simpleMesh.getVertices()[y*w+x] = ofVec3f(xReal, yReal, z);
+                simpleMesh.setVertex(vertexPointer, ofVec3f(xReal, yReal, z));
 			}
 			else {
 				indx.valid = false;
 			}
+            indexPointer++;
 		}
 	}
     //end
@@ -237,11 +257,12 @@ void ofxRGBDRenderer::update(){
 		ofLogError("ofxRGBDRenderer -- No verts");
 		return;
 	}
-	
+    
 	set<ofIndexType> calculatedNormals;
 	start = ofGetElapsedTimeMillis();
-	simpleMesh.getNormals().resize(simpleMesh.getVertices().size());
-	
+    if(calculateNormals){
+		simpleMesh.getNormals().resize(simpleMesh.getVertices().size());
+	}
 	for(int i = 0; i < baseIndeces.size(); i+=3){
 		if(indexMap[baseIndeces[i]].valid &&
 		   indexMap[baseIndeces[i+1]].valid &&
@@ -267,11 +288,11 @@ void ofxRGBDRenderer::update(){
 	
 	if(debug) cout << "indexing  " << simpleMesh.getIndices().size() << " took " << ofGetElapsedTimeMillis() - start << endl;
 
-	if(hasRGBImage){
-		start = ofGetElapsedTimeMillis();
+//	if(hasRGBImage){
+//		start = ofGetElapsedTimeMillis();
 		
 		//Mat pcMat = Mat(toCv(mesh));
-		Mat pcMat = Mat(toCv(simpleMesh));
+		//Mat pcMat = Mat(toCv(simpleMesh));
 		
 		//cout << "PC " << pcMat << endl;
 		//	cout << "Rot Depth->Color " << rotationDepthToColor << endl;
@@ -279,16 +300,15 @@ void ofxRGBDRenderer::update(){
 		//	cout << "Intrs Cam " << colorCalibration.getDistortedIntrinsics().getCameraMatrix() << endl;
 		//	cout << "Intrs Dist Coef " << colorCalibration.getDistCoeffs() << endl;
 		
-		imagePoints.clear();
+//		imagePoints.clear();
 
-		depthToRGBView = ofxCv::makeMatrix(rotationDepthToRGB, translationDepthToRGB);
 
 		//--
 		//load projection matrix
-		ofPushView();
-		rgbCalibration.getDistortedIntrinsics().loadProjectionMatrix();
-		glGetFloatv(GL_PROJECTION_MATRIX, rgbProjection.getPtr());
-		ofPopView();
+//		ofPushView();
+//		rgbCalibration.getDistortedIntrinsics().loadProjectionMatrix();
+//		glGetFloatv(GL_PROJECTION_MATRIX, rgbProjection.getPtr());
+//		ofPopView();
 		//--
 
 		/*
@@ -298,9 +318,9 @@ void ofxRGBDRenderer::update(){
 					  rgbCalibration.getDistCoeffs(),
 					  imagePoints);
 		*/
-		if(debug) cout << "project points " << (ofGetElapsedTimeMillis() - start) << endl;
-		
-		start = ofGetElapsedTimeMillis();
+//		if(debug) cout << "project points " << (ofGetElapsedTimeMillis() - start) << endl;
+//		
+//		start = ofGetElapsedTimeMillis();
 		/*
 		for(int i = 0; i < imagePoints.size(); i++) {
 			if(mirror){
@@ -312,140 +332,200 @@ void ofxRGBDRenderer::update(){
 			}
 		}
 		*/
-		if(debug) cout << "gen tex coords took " << (ofGetElapsedTimeMillis() - start) << endl;
-	}
+//		if(debug) cout << "gen tex coords took " << (ofGetElapsedTimeMillis() - start) << endl;
+//	}
 }
 
 ofMesh& ofxRGBDRenderer::getMesh(){
 	return simpleMesh;
 }
 
-void ofxRGBDRenderer::drawMesh() {
-	
-	if(!hasDepthImage){
-     	ofLogError("ofxRGBDRenderer::update() -- no depth image");
-        return;
-    }
-    
-    if(!calibrationSetup){
-     	ofLogError("ofxRGBDRenderer::update() -- no calibration");
-        return;
-    }
-	
-	//glPushMatrix();
-    ofPushMatrix();
-    ofScale(1, -1, 1);
-    ofRotate(meshRotate.x,1,0,0);
-    ofRotate(meshRotate.y,0,1,0);
-    ofRotate(meshRotate.z,0,0,1);
-	
-	glEnable(GL_DEPTH_TEST);
-	if(hasRGBImage){
-		currentRGBImage->getTextureReference().bind();
-	}
-	simpleMesh.drawFaces();
-	if(hasRGBImage){
-		currentRGBImage->getTextureReference().unbind();
-	}
-    
-	glDisable(GL_DEPTH_TEST);
-	
-	ofPopMatrix();
+void ofxRGBDRenderer::reloadShader(){
+    shader.load("shaders/unproject");
 }
 
-void ofxRGBDRenderer::drawPointCloud() {
-	
+bool ofxRGBDRenderer::bindRenderer(bool useShader){
+//	glEnable(GL_DEPTH_TEST);
 	if(!hasDepthImage){
      	ofLogError("ofxRGBDRenderer::update() -- no depth image");
-        return;
+        return false;
     }
     
     if(!calibrationSetup){
      	ofLogError("ofxRGBDRenderer::update() -- no calibration");
-        return;
+        return false;
     }
 	
     ofPushMatrix();
     ofScale(1, -1, 1);
-    ofRotate(meshRotate.x,1,0,0);
-    ofRotate(meshRotate.y,0,1,0);
-    ofRotate(meshRotate.z,0,0,1);
-    
-    glEnable(GL_DEPTH_TEST);
-	if(hasRGBImage){
-		currentRGBImage->getTextureReference().bind();
-	}
-	
-    simpleMesh.drawVertices();
-    
-	if(hasRGBImage){
-		currentRGBImage->getTextureReference().unbind();
-	}
-    
-	glDisable(GL_DEPTH_TEST);
-	
-	ofPopMatrix();
-}
-
-void ofxRGBDRenderer::drawWireFrame() {
-	glEnable(GL_DEPTH_TEST);
-	if(!hasDepthImage){
-     	ofLogError("ofxRGBDRenderer::update() -- no depth image");
-        return;
+    if(mirror){
+	    ofScale(-1, 1, 1);    
     }
-    
-    if(!calibrationSetup){
-     	ofLogError("ofxRGBDRenderer::update() -- no calibration");
-        return;
-    }
-	
-    ofPushMatrix();
-    ofScale(1, -1, 1);
     ofRotate(meshRotate.x,1,0,0);
     ofRotate(meshRotate.y,0,1,0);
     ofRotate(meshRotate.z,0,0,1);
 	
-    ofMatrix4x4 lookAt;
-	ofMatrix4x4 rgbMatrix = (depthToRGBView * rgbProjection);
     
-//    ofPushMatrix();
-//    glMultMatrixf(rgbMatrix.getInverse().getPtr());
-//    ofNoFill();
-//    ofBox(2.0f);
-//    ofPopMatrix();
+    //    ofPushMatrix();
+    //    glMultMatrixf(rgbMatrix.getInverse().getPtr());
+    //    ofNoFill();
+    //    ofBox(2.0f);
+    //    ofPopMatrix();
     
-    if(ofGetKeyPressed('v'))
-        cout << "view " <<depthToRGBView << endl;
-    else if (ofGetKeyPressed('p'))
-        cout << "projection " << rgbProjection << endl;
+    //    if(ofGetKeyPressed('v'))
+    //        cout << "view " <<depthToRGBView << endl;
+    //    else if (ofGetKeyPressed('p'))
+    //        cout << "projection " << rgbProjection << endl;
 	//cout << rgbMatrix << endl;
-
+    
 	if(hasRGBImage){
 		currentRGBImage->getTextureReference().bind();
-        glPushMatrix();
-		shader.begin();	
-		GLint loc = glGetUniformLocation(shader.getProgram(), "tTex");
-		glUniformMatrix4fv( loc, 1, GL_FALSE, rgbMatrix.getPtr() );
-		//cout << "loc " << loc << " prog " << shader.getProgram() << endl;
-		//shader.setUniform1f("dummy", 4.0);
-		ofVec2f dims = ofVec2f(currentRGBImage->getTextureReference().getWidth(), 
-   							currentRGBImage->getTextureReference().getHeight());
-		shader.setUniform2f("fudge", xmult/dims.x, ymult/dims.y);
-		shader.setUniform2f("dim", dims.x, dims.y);
-		glMatrixMode(GL_TEXTURE);
-		glLoadMatrixf(rgbMatrix.getPtr());
-		glMatrixMode(GL_MODELVIEW);
-        glPopMatrix();
+        if(useShader){
+            shader.begin();	
+            setupProjectionUniforms(shader);
+            /*
+            ofVec2f dims = ofVec2f(currentRGBImage->getTextureReference().getWidth(), 
+                                   currentRGBImage->getTextureReference().getHeight());
+            shader.setUniform2f("fudge", xmult/dims.x, ymult/dims.y);
+            shader.setUniform2f("dim", dims.x, dims.y);
+            
+            glMatrixMode(GL_TEXTURE);
+            glPushMatrix();
+            glLoadMatrixf(rgbMatrix.getPtr());
+            glMatrixMode(GL_MODELVIEW);  
+             */
+            shaderBound = true;
+             
+        }
 	}
-	simpleMesh.drawWireframe();
-	if(hasRGBImage){
-		shader.end();
+    rendererBound = true;
+    return true;
+}
+
+
+void ofxRGBDRenderer::unbindRenderer(){
+    
+    if(!rendererBound){
+        ofLogError("ofxRGBDRenderer::unbindRenderer -- called without renderer bound");
+     	return;   
+    }
+    
+    if(hasRGBImage){
 		currentRGBImage->getTextureReference().unbind();
+        if(shaderBound){
+            restortProjection();
+            shader.end();
+            shaderBound = false;
+        }
 	}
     
-	glDisable(GL_DEPTH_TEST);
+//	glDisable(GL_DEPTH_TEST);
 	
 	ofPopMatrix();
+    rendererBound = false;
+}
+
+
+void ofxRGBDRenderer::setupProjectionUniforms(ofShader& theShader){
+    
+    ofMatrix4x4 rgbMatrix = (depthToRGBView * rgbProjection);
+    ofVec2f dims = ofVec2f(currentRGBImage->getTextureReference().getWidth(), 
+                           currentRGBImage->getTextureReference().getHeight());
+    theShader.setUniform2f("fudge", xmult/dims.x, ymult/dims.y);
+    theShader.setUniform2f("dim", dims.x, dims.y);
+    
+    glMatrixMode(GL_TEXTURE);
+    glPushMatrix();
+    glLoadMatrixf(rgbMatrix.getPtr());
+    glMatrixMode(GL_MODELVIEW);      
+}
+
+void ofxRGBDRenderer::restortProjection(){
+    glMatrixMode(GL_TEXTURE);
+    glPopMatrix();
+    glMatrixMode(GL_MODELVIEW);   
+}
+
+void ofxRGBDRenderer::drawMesh(bool useShader) {
+	
+//	if(!hasDepthImage){
+//     	ofLogError("ofxRGBDRenderer::update() -- no depth image");
+//        return;
+//    }
+//    
+//    if(!calibrationSetup){
+//     	ofLogError("ofxRGBDRenderer::update() -- no calibration");
+//        return;
+//    }
+//	
+//	//glPushMatrix();
+//    ofPushMatrix();
+//    ofScale(1, -1, 1);
+//    ofRotate(meshRotate.x,1,0,0);
+//    ofRotate(meshRotate.y,0,1,0);
+//    ofRotate(meshRotate.z,0,0,1);
+//	
+//	glEnable(GL_DEPTH_TEST);
+//	if(hasRGBImage){
+//		currentRGBImage->getTextureReference().bind();
+//	}
+    if(bindRenderer(useShader)){
+		simpleMesh.drawFaces();
+        unbindRenderer();
+    }
+    
+//	if(hasRGBImage){
+//		currentRGBImage->getTextureReference().unbind();
+//	}
+//    
+//	glDisable(GL_DEPTH_TEST);
+//	
+//	ofPopMatrix();
+}
+
+void ofxRGBDRenderer::drawPointCloud(bool useShader) {
+	
+//	if(!hasDepthImage){
+//     	ofLogError("ofxRGBDRenderer::update() -- no depth image");
+//        return;
+//    }
+//    
+//    if(!calibrationSetup){
+//     	ofLogError("ofxRGBDRenderer::update() -- no calibration");
+//        return;
+//    }
+//	
+//    ofPushMatrix();
+//    ofScale(1, -1, 1);
+//    ofRotate(meshRotate.x,1,0,0);
+//    ofRotate(meshRotate.y,0,1,0);
+//    ofRotate(meshRotate.z,0,0,1);
+//    
+//    glEnable(GL_DEPTH_TEST);
+//	if(hasRGBImage){
+//		currentRGBImage->getTextureReference().bind();
+//	}
+//	
+    if(bindRenderer(useShader)){
+	    simpleMesh.drawVertices();
+        unbindRenderer();
+    }
+    
+//	if(hasRGBImage){
+//		currentRGBImage->getTextureReference().unbind();
+//	}
+//    
+//	glDisable(GL_DEPTH_TEST);
+//	
+//	ofPopMatrix();
+}
+
+void ofxRGBDRenderer::drawWireFrame(bool useShader) {
+	if(bindRenderer(useShader)){
+		simpleMesh.drawWireframe();
+        unbindRenderer();
+    }
+	
 }
 
 ofTexture& ofxRGBDRenderer::getTextureReference(){

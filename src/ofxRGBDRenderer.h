@@ -56,9 +56,15 @@ class ofxRGBDRenderer {
 	bool mirror;
     bool calibrationSetup;
 	
-	void reloadShader(){
-		shader.load("shaders/unproject");
-	}
+    bool bindRenderer(bool useShader = true);
+    
+    void setupProjectionUniforms(ofShader& shader);
+    void restortProjection();
+    
+    void unbindRenderer();
+    
+	void reloadShader();
+    
     ofVec3f meshRotate;
     
 	//sets a level of simplification, 
@@ -67,9 +73,9 @@ class ofxRGBDRenderer {
 	void setSimplification(int level);
 	int getSimplification();
 	
-	void drawMesh();
-	void drawPointCloud();
-	void drawWireFrame();
+	void drawMesh(bool useShader = true);
+	void drawPointCloud(bool useSahder = true);
+	void drawWireFrame(bool useSahder = true);
 	
 	//populated with vertices, texture coords, and indeces
 	ofMesh& getMesh();
@@ -84,6 +90,9 @@ class ofxRGBDRenderer {
 	float xTextureScale;
 	float yTextureScale;
 
+    bool shaderBound;
+    bool rendererBound;
+    
 	Calibration depthCalibration, rgbCalibration;    
 	Mat rotationDepthToRGB, translationDepthToRGB;
 
