@@ -145,6 +145,7 @@ void ofxTLDepthImageSequence::mouseDragged(ofMouseEventArgs& args, bool snapped)
 		int index = indexForScreenX(args.x, videoThumbs.size());
 		selectFrame(index);
 		timeline->setCurrentFrame(index);
+        timeline->flagUserChangedValue();
 	}
 }
 
