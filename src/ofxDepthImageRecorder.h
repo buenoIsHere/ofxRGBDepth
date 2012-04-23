@@ -47,7 +47,7 @@ class ofxDepthImageRecorder {
 	ofxDepthImageRecorder();
 	~ofxDepthImageRecorder();
 
-    vector<Take>& getTakes();
+    vector<Take*>& getTakes();
 	
 	void setup();
 	void toggleRecord();
@@ -61,6 +61,7 @@ class ofxDepthImageRecorder {
 	int numFramesWaitingCompession();
 	int numDirectoriesWaitingCompression();
 	
+    ofxDepthImageCompressor& compressorRef();
 	void shutdown();
 	
 	int recordingStartTime; //in millis -- potentially should make this more accurate
@@ -79,7 +80,7 @@ class ofxDepthImageRecorder {
     void incrementTake();
     
     //start converting the current directory
-    vector<Take> takes;
+    vector<Take*> takes;
 	void compressCurrentTake();
 	void updateTakes();
 	int compressingTakeIndex;    

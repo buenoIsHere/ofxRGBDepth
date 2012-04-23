@@ -73,13 +73,15 @@ class ofxRGBDCaptureGui : public ofxMSAInteractiveObjectDelegate {
 
 	void loadDirectory();
 	void loadDirectory(string path);
+	void loadDefaultDirectory();
+    
 	void loadSequenceForPlayback( int index );
 	void updateTakeButtons();
 	
 	void toggleRecord();
 	void captureCalibrationImage();
     
-	void drawPointcloud(bool fullscreen);
+	void drawPointcloud(ofShortPixels& pix, bool fullscreen);
 	
 	string workingDirectory;
 	
@@ -103,7 +105,9 @@ class ofxRGBDCaptureGui : public ofxMSAInteractiveObjectDelegate {
 	ofxMSAInteractiveObjectWithDelegate* btnCalibrateTab;
 	ofxMSAInteractiveObjectWithDelegate* btnRecordTab;
 	ofxMSAInteractiveObjectWithDelegate* btnPlaybackTab;
-	
+	ofxMSAInteractiveObjectWithDelegate* currentTabObject;
+    ofxMSAInteractiveObjectWithDelegate* currentRenderModeObject;
+    
 	ofxMSAInteractiveObjectWithDelegate* btnRecordBtn;
 	
 	ofxMSAInteractiveObjectWithDelegate* btnRenderBW;
@@ -122,7 +126,16 @@ class ofxRGBDCaptureGui : public ofxMSAInteractiveObjectDelegate {
 	ofPtr<ofxDepthImageProvider> depthImageProvider;
 	
     bool providerSet;
-	unsigned short* frame;
 	ofImage calibrationImage;
-    
+	//unsigned short* frame;
+
+  protected:
+    ofImage currentDepthImage;
+    void createRainbowPallet();
+	unsigned char LUTR[256];
+	unsigned char LUTG[256];
+	unsigned char LUTB[256];
+
+	void updateDepthImage(ofShortPixels& pixels);
+    ofImage depthImage;
 };

@@ -12,27 +12,30 @@
 
 ofxTLDepthImageSequence::ofxTLDepthImageSequence(){
 	sequenceLoaded = false;
-	currentDepthRaw = NULL;
-	thumbnailDepthRaw = NULL;
+//	currentDepthRaw = NULL;
+//	thumbnailDepthRaw = NULL;
 	selectedFrame = 0;
 	thumbsEnabled = true;
 	framesHaveTimestamps = false;
 }
 
 ofxTLDepthImageSequence::~ofxTLDepthImageSequence(){
-	if(currentDepthRaw != NULL){
-		delete currentDepthRaw;
-	}
-	if(thumbnailDepthRaw != NULL){
-		delete thumbnailDepthRaw;
-	}
+//	if(currentDepthRaw != NULL){
+//		delete currentDepthRaw;
+//	}
+//	if(thumbnailDepthRaw != NULL){
+//		delete thumbnailDepthRaw;
+//	}
 }
 
 void ofxTLDepthImageSequence::setup(){
 	
 	enable();
-	currentDepthRaw = new unsigned short[640*480];
-	thumbnailDepthRaw = new unsigned short[640*480];
+	currentDepthRaw.allocate(640, 480, OF_IMAGE_GRAYSCALE);
+	thumbnailDepthRaw.allocate(640, 480, OF_IMAGE_GRAYSCALE);
+//	currentDepthRaw = new unsigned short[640*480];
+//	thumbnailDepthRaw = new unsigned short[640*480];
+    
 	currentDepthImage = decoder.convertTo8BitImage(currentDepthRaw);
 }
 
@@ -166,7 +169,7 @@ void ofxTLDepthImageSequence::playbackLooped(ofxTLPlaybackEventArgs& args){
 
 void ofxTLDepthImageSequence::selectFrame(int frame){
 	selectedFrame = ofClamp(frame, 0, videoThumbs.size()-1);
-	decoder.readCompressedPng(videoThumbs[selectedFrame].sourcepath, currentDepthRaw);
+	decoder.readCompressedPng(videoThumbs[selectedFrame].sourcepath, currentDepthRaw.getPixels());
 	currentDepthImage = decoder.convertTo8BitImage(currentDepthRaw);
 }
 
@@ -333,7 +336,7 @@ void ofxTLDepthImageSequence::generateThumbnailForFrame(int i){
 			videoThumbs[i].load();
 		}
 		else {
-			decoder.readCompressedPng(videoThumbs[i].sourcepath, thumbnailDepthRaw);
+			decoder.readCompressedPng(videoThumbs[i].sourcepath, thumbnailDepthRaw.getPixels());
 			ofImage grayConverted = decoder.convertTo8BitImage(thumbnailDepthRaw);
 			videoThumbs[i].create(grayConverted);
 		}

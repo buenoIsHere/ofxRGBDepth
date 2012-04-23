@@ -24,7 +24,7 @@ class ofxDepthImageProvider {
 
 	ofShortPixels& getRawDepth();
 	ofImage& getRawIRImage();
-	ofImage& getDepthImage();
+//	ofImage& getDepthImage();
 	
 	void setDepthModeRainbow(bool useRainbow); //otherwise grayscale
 
@@ -39,10 +39,6 @@ class ofxDepthImageProvider {
 	ofImage rawIRImage;
 	ofImage depthImage;
 
-	void createRainbowPallet();
-	unsigned char LUTR[256];
-	unsigned char LUTG[256];
-	unsigned char LUTB[256];
 	
 	
 };

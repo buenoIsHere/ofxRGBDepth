@@ -49,8 +49,10 @@ class ofxTLDepthImageSequence : public ofxTLElement {
 	void playbackLooped(ofxTLPlaybackEventArgs& args);
 	
 	ofImage currentDepthImage;
-	unsigned short* currentDepthRaw;
-	unsigned short* thumbnailDepthRaw;
+	//unsigned short* currentDepthRaw;
+    ofShortPixels currentDepthRaw;
+	//unsigned short* thumbnailDepthRaw;
+    ofShortPixels thumbnailDepthRaw;
 	
 	int getSelectedFrame();
 	

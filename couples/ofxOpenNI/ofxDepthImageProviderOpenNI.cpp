@@ -27,7 +27,7 @@ void ofxDepthImageProviderOpenNI::update(){
 
 	if(recordDepth.isFrameNew()){
 		bNewFrame = true;
-		bDepthImageDirty = true;
+//		bDepthImageDirty = true;
 		depthPixels.setFromPixels( (unsigned short*) recordDepth.getRawDepthPixels(), 640, 480, OF_IMAGE_GRAYSCALE);
 	}
 }
@@ -39,5 +39,4 @@ int ofxDepthImageProviderOpenNI::maxDepth(){
 
 void ofxDepthImageProviderOpenNI::close(){
 	recordContext.shutdown();
-	
 }
