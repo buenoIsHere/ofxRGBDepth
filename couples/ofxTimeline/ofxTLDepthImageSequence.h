@@ -73,6 +73,11 @@ class ofxTLDepthImageSequence : public ofxTLElement {
 	//only called during playback
 	void update(ofEventArgs& args);
 	
+    ofRange thumbnailUpdatedZoomLevel;
+    float thumbnailUpdatedWidth;
+    float thumbnailUpdatedHeight;
+    bool currentlyZooming;
+
 	int selectedFrame;
 	bool sequenceLoaded;
 	

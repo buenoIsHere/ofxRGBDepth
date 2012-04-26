@@ -16,7 +16,11 @@
 #pragma once
 #include "ofMain.h"
 #include "ofxCv.h"
-#include "ofRange.h"
+
+typedef struct{
+	int vertexIndex;
+	bool valid;
+} IndexMap;
 
 using namespace ofxCv;
 using namespace cv;
@@ -27,9 +31,12 @@ class ofxRGBDRenderer {
 	~ofxRGBDRenderer();
 	
 	bool setup(string calibrationDirectory);
-	
+
 	void setRGBTexture(ofBaseHasTexture& rgbTexture); 
+    void setDepthImage(ofShortPixels& pix);
 	void setDepthImage(unsigned short* depthPixelsRaw);
+
+    ofBaseHasTexture& getRGBTexture();
 
 	//used for supplying a preview texture that is smaller than the image was calibrated on.
 	//helps for playback vs rendering
@@ -38,35 +45,37 @@ class ofxRGBDRenderer {
 	void update();
 
 	//fudge factors to apply during alignment
-	float xshift;
-	float yshift;
 	float xmult;
 	float ymult;
-	float xscale;
-	float yscale;
-	float rotationCompensation;
-	
 	float edgeCull;
 	float farClip;
 	
 	//helps diffuse "stairstep" looking patterns by adding a bit of randomness
 	float ZFuzz;
 	
-	float fadeToWhite; //0 to 1
 	bool mirror;
+    bool calibrationSetup;
 	
-	
-	float rotateMeshX;
+    bool bindRenderer(bool useShader = true);
+    
+    void setupProjectionUniforms(ofShader& shader);
+    void restortProjection();
+    
+    void unbindRenderer();
+    
+	void reloadShader();
+    
+    ofVec3f meshRotate;
+    
 	//sets a level of simplification, 
 	//should be either 1 for none
 	//2 for half, or 4 for quarter;
 	void setSimplification(int level);
 	int getSimplification();
 	
-	bool useCustomShader;
-	void drawMesh();
-	void drawPointCloud();
-	void drawWireFrame();
+	void drawMesh(bool useShader = true);
+	void drawPointCloud(bool useSahder = true);
+	void drawWireFrame(bool useSahder = true);
 	
 	//populated with vertices, texture coords, and indeces
 	ofMesh& getMesh();
@@ -75,20 +84,23 @@ class ofxRGBDRenderer {
 	Calibration& getRGBCalibration();
 	Calibration& getDepthCalibration();
 	
-  protected:
-	
-	ofShader colorShader;
-	int simplify;
+  protected:	
 
+	int simplify;
 	float xTextureScale;
 	float yTextureScale;
 
+    bool shaderBound;
+    bool rendererBound;
+    
 	Calibration depthCalibration, rgbCalibration;    
 	Mat rotationDepthToRGB, translationDepthToRGB;
 
 	bool hasDepthImage;
 	bool hasRGBImage;
-	
+
+    bool calculateNormals;
+
 	ofBaseHasTexture* currentRGBImage;
 	ofShortImage currentDepthImage;
 	ofShortImage undistortedDepthImage;
@@ -100,8 +112,10 @@ class ofxRGBDRenderer {
     vector<ofIndexType> baseIndeces;
     vector<ofVec2f> texcoords;
     vector<ofVec3f> vertices;
-	
-	ofVec3f meshCenter;
-	float meshDistance;
-	
+	vector<IndexMap> indexMap;
+
+	ofMatrix4x4 depthToRGBView;// = ofxCv::makeMatrix(rotationDepthToRGB, translationDepthToRGB);
+	ofMatrix4x4 rgbProjection;
+
+	ofShader shader;
 };

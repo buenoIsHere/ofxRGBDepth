@@ -28,13 +28,16 @@ class ofxRGBDVideoDepthSequence {
 	bool loadPairingFile(string pairFileXml);
 	
 	bool ready();
-	void addAlignedFrames(int videoFrame, int depthFrame);
+	void reset();
+    
+    void addAlignedFrames(int videoFrame, int depthFrame);
 	void addAlignedTime(int videoMillis, int depthMillis);
 	void addAlignedPair(VideoDepthPair pair);
 	
 	void removeAlignedPair(int index);
 
-	long getDepthFrameForVideoFrame(int videoFrame);
+    //This will return a time in milliseconds if the frames are time based
+	long getDepthFrameForVideoFrame(long videoFrame);
 	bool isSequenceTimebased();
 	
 	vector<VideoDepthPair> & getPairs();
