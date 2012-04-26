@@ -37,6 +37,8 @@ ofxRGBDRenderer::ofxRGBDRenderer(){
 	farClip = 5000;
 	fadeToWhite = 0.0;
 	useCustomShader = false;
+
+	ZFuzz = 0;
 	
 }
 
@@ -58,7 +60,7 @@ bool ofxRGBDRenderer::setup(string calibrationDirectory){
 	
 	loadMat(rotationDepthToRGB, calibrationDirectory+"/rotationDepthToRGB.yml");
 	loadMat(translationDepthToRGB, calibrationDirectory+"/translationDepthToRGB.yml");
-	cout << translationDepthToRGB << " matrix! " << endl;
+
 	colorShader.load("shaders/colorcontrol");
 	colorShader.setUniform1i("tex0", 0);
 	
@@ -150,7 +152,7 @@ void ofxRGBDRenderer::update(){
 	Point2d principalPoint = depthCalibration.getUndistortedIntrinsics().getPrincipalPoint();
 	cv::Size imageSize = depthCalibration.getUndistortedIntrinsics().getImageSize();
 	
-	depthCalibration.undistort( toCv(currentDepthImage), toCv(undistortedDepthImage) );
+	depthCalibration.undistort( toCv(currentDepthImage), toCv(undistortedDepthImage), CV_INTER_NN);
 	
 	
 	vector<IndexMap> indexMap;
@@ -158,7 +160,7 @@ void ofxRGBDRenderer::update(){
 	simpleMesh.clearIndices();
 	simpleMesh.clearTexCoords();
 	simpleMesh.clearNormals();
-		
+	
 	int imageIndex = 0;
 	int vertexIndex = 0;
 	for(int y = 0; y < h; y+= simplify) {
@@ -176,6 +178,9 @@ void ofxRGBDRenderer::update(){
 				yReal = (((float) y - principalPoint.y + ymult ) / imageSize.height) * z * fy/* + yshift*/;
 				indx.vertexIndex = simpleMesh.getVertices().size();
 				indx.valid = true;
+				if(ZFuzz != 0){
+					z += ofRandomf()*ZFuzz;
+				}
 				ofVec3f pt = ofVec3f(xReal, yReal, z);
 				simpleMesh.addVertex(pt);
 			}

@@ -49,9 +49,13 @@ class ofxRGBDRenderer {
 	float edgeCull;
 	float farClip;
 	
+	//helps diffuse "stairstep" looking patterns by adding a bit of randomness
+	float ZFuzz;
+	
 	float fadeToWhite; //0 to 1
 	bool mirror;
-		
+	
+	
 	float rotateMeshX;
 	//sets a level of simplification, 
 	//should be either 1 for none
