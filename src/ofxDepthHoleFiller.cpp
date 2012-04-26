@@ -17,6 +17,7 @@ void ofxDepthHoleFiller::setIterations(int newIterations){
 
 void ofxDepthHoleFiller::setKernelSize(int newKernelSize){
 	kernelSize = ofClamp(newKernelSize, 1, 20);	
+    
 	if(kernelSize % 2 == 0){
 		kernelSize++;
 	}
@@ -43,4 +44,3 @@ void ofxDepthHoleFiller::close(ofShortPixels& depthPixels){
         cv::add(original, dilated, original, filledMask);        
 	}	
 }
-

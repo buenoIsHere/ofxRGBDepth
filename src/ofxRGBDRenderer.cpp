@@ -29,15 +29,19 @@ ofxRGBDRenderer::ofxRGBDRenderer(){
     
 	hasDepthImage = false;
 	hasRGBImage = false;
+
+    shaderBound = false;
+    rendererBound = false;
+    
+	farClip = 5000;
+
 	mirror = false;
 	calibrationSetup = false;
     
     reloadShader();
     setSimplification(1);
     
-    shaderBound = false;
-    rendererBound = false;
-    
+
 }
 
 ofxRGBDRenderer::~ofxRGBDRenderer(){
@@ -56,7 +60,6 @@ bool ofxRGBDRenderer::setup(string calibrationDirectory){
 	
 	loadMat(rotationDepthToRGB, calibrationDirectory+"/rotationDepthToRGB.yml");
 	loadMat(translationDepthToRGB, calibrationDirectory+"/translationDepthToRGB.yml");
-	
     
     depthToRGBView = ofxCv::makeMatrix(rotationDepthToRGB, translationDepthToRGB);
 
@@ -115,7 +118,7 @@ void ofxRGBDRenderer::setSimplification(int level){
 			simpleMesh.addVertex(ofVec3f(0,0,0));
 		}
 	}
-	cout << "AFTER SETUP base indeces? " << baseIndeces.size() << " index map? " << indexMap.size() << endl;
+	//cout << "AFTER SETUP base indeces? " << baseIndeces.size() << " index map? " << indexMap.size() << endl;
 }
 
 //-----------------------------------------------
@@ -192,44 +195,6 @@ void ofxRGBDRenderer::update(){
 	
 	depthCalibration.undistort( toCv(currentDepthImage), toCv(undistortedDepthImage), CV_INTER_NN);
 	
-//	simpleMesh.clearVertices();
-
-//	simpleMesh.clearTexCoords();
-//	simpleMesh.clearNormals();
-//	indexMap.clear();
-    
-	/*
-	int imageIndex = 0;
-	int vertexIndex = 0;
-	for(int y = 0; y < h; y+= simplify) {
-		for(int x = 0; x < w; x+= simplify) {
-			unsigned short z = undistortedDepthImage.getPixels()[y*w+x];
-			IndexMap indx;
-			if(z != 0 && z < farClip){
-				float xReal,yReal;
-				if(mirror){
-					xReal = (((float) principalPoint.x - x - xmult ) / imageSize.width) * z * fx;
-				}
-				else{
-					xReal = (((float) x - principalPoint.x + xmult ) / imageSize.width) * z * fx;
-				}
-				yReal = (((float) y - principalPoint.y + ymult ) / imageSize.height) * z * fy;
-				indx.vertexIndex = simpleMesh.getVertices().size();
-				indx.valid = true;
-				if(ZFuzz != 0){
-					z += ofRandomf()*ZFuzz;
-				}
-				ofVec3f pt = ofVec3f(xReal, yReal, z);
-				simpleMesh.addVertex(pt);
-			}
-			else {
-				indx.valid = false;
-			}
-			indexMap.push_back( indx );
-		}
-	}
-	*/
-
     //start
 	int imageIndex = 0;
 	int vertexIndex = 0;

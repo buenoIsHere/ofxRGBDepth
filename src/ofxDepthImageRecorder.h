@@ -11,17 +11,24 @@
 #include "ofMain.h"
 #include "ofxDepthImageCompressor.h"
 
-typedef struct QueuedFrame {
+typedef struct {
 	unsigned short* pixels;
 	string directory;
 	string filename;
 	int timestamp;
-};
+} QueuedFrame;
+
+typedef struct {
+    string path;
+	int numFrames;
+    int framesConverted;
+} Take;
 
 //thread classes for callbacks
 class ofxDepthImageRecorder;
 class ofxRGBDRecorderThread : public ofThread {
 public:
+    bool shutdown;
 	ofxDepthImageRecorder* delegate;
 	ofxRGBDRecorderThread(ofxDepthImageRecorder* d) : delegate(d){}	
 	void threadedFunction();
@@ -29,6 +36,7 @@ public:
 
 class ofxRGBDEncoderThread : public ofThread {
 public:
+    bool shutdown;
 	ofxDepthImageRecorder* delegate;
 	ofxRGBDEncoderThread(ofxDepthImageRecorder* d) : delegate(d){}
 	void threadedFunction();	
@@ -39,7 +47,7 @@ class ofxDepthImageRecorder {
 	ofxDepthImageRecorder();
 	~ofxDepthImageRecorder();
 
-	vector<string> getTakePaths();
+    vector<Take*>& getTakes();
 	
 	void setup();
 	void toggleRecord();
@@ -53,6 +61,7 @@ class ofxDepthImageRecorder {
 	int numFramesWaitingCompession();
 	int numDirectoriesWaitingCompression();
 	
+    ofxDepthImageCompressor& compressorRef();
 	void shutdown();
 	
 	int recordingStartTime; //in millis -- potentially should make this more accurate
@@ -60,27 +69,26 @@ class ofxDepthImageRecorder {
 	void encoderThreadCallback();
 	void recorderThreadCallback();
 	
-	
   protected:
-	bool recording;
-	
-	void incrementTake();
-    //start converting the current directory
-	void compressCurrentTake();
-
-	
+    
 	ofxDepthImageCompressor compressor;
 	ofxRGBDRecorderThread recorderThread;
 	ofxRGBDEncoderThread encoderThread;
+    
+	bool recording;
 	
-	ofImage compressedDepthImage;
-
+    void incrementTake();
+    
+    //start converting the current directory
+    vector<Take*> takes;
+	void compressCurrentTake();
+	void updateTakes();
+	int compressingTakeIndex;    
+    
 	int framesToCompress;
 	
 	unsigned short* encodingBuffer;
 	unsigned short* lastFramePixs;
-
-	
 	
 	int folderCount;
     string currentFolderPrefix;
@@ -89,5 +97,6 @@ class ofxDepthImageRecorder {
 	int currentFrame;
 	
 	queue<QueuedFrame> saveQueue;
-	queue<string> encodeDirectories;
+	//queue<string> encodeDirectories;
+    queue<Take*> encodeDirectories;
 };

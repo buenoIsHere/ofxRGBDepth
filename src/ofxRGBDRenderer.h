@@ -53,6 +53,7 @@ class ofxRGBDRenderer {
 	//helps diffuse "stairstep" looking patterns by adding a bit of randomness
 	float ZFuzz;
 	
+
 	bool mirror;
     bool calibrationSetup;
 	

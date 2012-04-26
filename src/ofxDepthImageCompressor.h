@@ -26,8 +26,13 @@ class ofxDepthImageCompressor {
 	unsigned short* readCompressedPng(string filename, unsigned short* outbuf = NULL);
 	
 	ofImage readDepthFrametoImage(string filename);
+    
+    ofImage convertTo8BitImage(ofShortPixels& pix);
 	ofImage convertTo8BitImage(unsigned short* buf);
-
+    
+	void convertTo8BitImage(ofShortPixels& pix, ofImage& image);
+    void convertTo8BitImage(unsigned short* buf, ofImage& image);
+    
   protected:
 	ofImage compressedDepthImage;
 };

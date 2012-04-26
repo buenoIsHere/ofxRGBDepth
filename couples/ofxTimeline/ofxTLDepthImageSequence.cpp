@@ -12,8 +12,8 @@
 
 ofxTLDepthImageSequence::ofxTLDepthImageSequence(){
 	sequenceLoaded = false;
-	currentDepthRaw = NULL;
-	thumbnailDepthRaw = NULL;
+//	currentDepthRaw = NULL;
+//	thumbnailDepthRaw = NULL;
 	selectedFrame = 0;
 	thumbsEnabled = true;
 	framesHaveTimestamps = false;
@@ -25,19 +25,22 @@ ofxTLDepthImageSequence::ofxTLDepthImageSequence(){
 }
 
 ofxTLDepthImageSequence::~ofxTLDepthImageSequence(){
-	if(currentDepthRaw != NULL){
-		delete currentDepthRaw;
-	}
-	if(thumbnailDepthRaw != NULL){
-		delete thumbnailDepthRaw;
-	}
+//	if(currentDepthRaw != NULL){
+//		delete currentDepthRaw;
+//	}
+//	if(thumbnailDepthRaw != NULL){
+//		delete thumbnailDepthRaw;
+//	}
 }
 
 void ofxTLDepthImageSequence::setup(){
 	
 	enable();
-	currentDepthRaw = new unsigned short[640*480];
-	thumbnailDepthRaw = new unsigned short[640*480];
+	currentDepthRaw.allocate(640, 480, OF_IMAGE_GRAYSCALE);
+	thumbnailDepthRaw.allocate(640, 480, OF_IMAGE_GRAYSCALE);
+//	currentDepthRaw = new unsigned short[640*480];
+//	thumbnailDepthRaw = new unsigned short[640*480];
+    
 	currentDepthImage = decoder.convertTo8BitImage(currentDepthRaw);
 }
 
@@ -53,6 +56,10 @@ void ofxTLDepthImageSequence::disable(){
 }
 
 void ofxTLDepthImageSequence::update(ofEventArgs& args){
+    if(!sequenceLoaded || timeline == NULL){
+    	return;
+    }
+    
 	//if we are on a timebased timeline and our frames have timestamps
 	//prefer selecting based on the time as we'll get more accurate playback speeds
 	if(!timeline->getIsFrameBased() && framesHaveTimestamps){ 
@@ -69,13 +76,21 @@ void ofxTLDepthImageSequence::draw(){
 		return;
 	}
     
+    if(!sequenceLoaded){
+		ofPushStyle();
+        ofSetColor(timeline->getColors().disabledColor);
+        ofRect(getDrawRect());
+        ofPopStyle();
+        return;
+    }
+	
     calculateFramePositions();
-	if(thumbsEnabled && !ofGetMousePressed() && 
+    if(thumbsEnabled && !ofGetMousePressed() && 
        (thumbnailUpdatedZoomLevel != zoomBounds ||
-       	thumbnailUpdatedWidth != getDrawRect().width ||
+        thumbnailUpdatedWidth != getDrawRect().width ||
         thumbnailUpdatedHeight != getDrawRect().height) ) {
-		generateVideoThumbnails();	
-	}
+           generateVideoThumbnails();	
+    }
 
 	ofPushStyle();
 	if(thumbsEnabled){
@@ -173,7 +188,7 @@ void ofxTLDepthImageSequence::playbackLooped(ofxTLPlaybackEventArgs& args){
 
 void ofxTLDepthImageSequence::selectFrame(int frame){
 	selectedFrame = ofClamp(frame, 0, videoThumbs.size()-1);
-	decoder.readCompressedPng(videoThumbs[selectedFrame].sourcepath, currentDepthRaw);
+	decoder.readCompressedPng(videoThumbs[selectedFrame].sourcepath, currentDepthRaw.getPixels());
 	currentDepthImage = decoder.convertTo8BitImage(currentDepthRaw);
 }
 
@@ -191,6 +206,10 @@ long ofxTLDepthImageSequence::getSelectedTimeInMillis(){
 
 int ofxTLDepthImageSequence::frameForTime(long timeInMillis){
 	
+    if(!sequenceLoaded){
+    	return 0;
+    }
+    
 	if(!framesHaveTimestamps){
 		ofLogError("ofxTLDepthImageSequence -- can't select frame for time if there are no timestamps");
 		return 0;
@@ -290,15 +309,19 @@ bool ofxTLDepthImageSequence::loadSequence(string seqdir){
 	sequenceLoaded = true;
 	videoThumbs[0].visible = true;
 	generateThumbnailForFrame(0);
-    
-	cout << "calculating frame positions" << endl;
+//	cout << "calculating frame positions" << endl;
 	calculateFramePositions();
-	
+//	cout << "generating thumbnails" << endl;
+	generateVideoThumbnails();
 	return true;
 }
 
 void ofxTLDepthImageSequence::calculateFramePositions(){
+    
+//    cout << "calculating frame positions" << endl;
+    
 	if(timeline == NULL){
+        ofLogError("ofxTLDepthImageSequence -- timeline is null!");
 		return;
 	}
 	
@@ -311,8 +334,6 @@ void ofxTLDepthImageSequence::calculateFramePositions(){
 	int framesToShow = MAX(totalPixels / frameWidth, 1);
 	int frameStep = MAX(videoThumbs.size() / framesToShow, 1); 
 	int minPixelIndex = -(zoomBounds.min * totalPixels);
-	
-	//cout << "bounds are " << bounds.width << " " << bounds.height << " frameWidth " << frameWidth << " total pixels " << totalPixels << " frame step " << frameStep << " minpix " << minPixelIndex << endl;
 	
 	for(int i = 0; i < videoThumbs.size(); i++){
 		if(i % frameStep == 0){
@@ -341,7 +362,7 @@ void ofxTLDepthImageSequence::generateThumbnailForFrame(int i){
 			videoThumbs[i].load();
 		}
 		else {
-			decoder.readCompressedPng(videoThumbs[i].sourcepath, thumbnailDepthRaw);
+			decoder.readCompressedPng(videoThumbs[i].sourcepath, thumbnailDepthRaw.getPixels());
 			ofImage grayConverted = decoder.convertTo8BitImage(thumbnailDepthRaw);
 			videoThumbs[i].create(grayConverted);
 		}

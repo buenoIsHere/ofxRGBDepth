@@ -22,11 +22,13 @@ class ofxCvCheckerboardPreview : public ofThread {
 	void setTestImage(ofPixelsRef pixels);
 	void setSmallestSquarePixelsize(int squarePixelSize);
 	bool currentImageHasCheckerboard();	
+    
 	void draw();
 	void draw(float x, float y);
 	void draw(ofVec2f point);
 	void draw(const ofRectangle& rect);
 
+    bool hasFoundBoard();
 
 	int getSmallestSquarePixelsize();
 	Calibration& getCalibration();

@@ -24,6 +24,10 @@ void ofxCvCheckerboardPreview::setup(int squaresWide, int squaresTall, int squar
 
 }
 
+bool ofxCvCheckerboardPreview::hasFoundBoard(){
+	return boardFound;
+}
+
 void ofxCvCheckerboardPreview::setTestImage(ofPixelsRef pixels) {
 	
 	if(pixels.getImageType() != OF_IMAGE_GRAYSCALE){
