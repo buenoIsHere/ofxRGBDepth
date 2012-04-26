@@ -15,7 +15,7 @@ ofxRGBDCaptureGui::ofxRGBDCaptureGui(){
 void ofxRGBDCaptureGui::setup(){
     
 	currentTab = TabCalibrate;
-	currentRenderMode = RenderRainbow;
+	currentRenderMode = RenderBW;
     
 	downColor  = ofColor(255, 120, 0);
 	idleColor  = ofColor(220, 200, 200);
@@ -84,6 +84,7 @@ void ofxRGBDCaptureGui::setup(){
 	alignment.setupGui(0, btnheight*4+frameheight, ofGetWidth());
 	
 	timeline.setup();
+    timeline.getColors().loadColors("defaultColors.xml");
 	timeline.setOffset(ofVec2f(0,btnRecordBtn->y+btnRecordBtn->height));
 	timeline.addElement("depth sequence", &depthSequence);
 	timeline.setWidth(ofGetWidth());
@@ -101,6 +102,7 @@ void ofxRGBDCaptureGui::setup(){
 	
 	updateTakeButtons();
 	
+    cam.setup();
 	cam.loadCameraPosition();
 	
 	cam.speed = 25;
@@ -109,10 +111,10 @@ void ofxRGBDCaptureGui::setup(){
 
     ofRegisterMouseEvents(this);
     ofRegisterKeyEvents(this);    
-    ofAddListener(ofEvents.windowResized, this, &ofxRGBDCaptureGui::windowResized);
+    ofAddListener(ofEvents().windowResized, this, &ofxRGBDCaptureGui::windowResized);
    // ofAddListener(ofEvents.exit, this, &ofxRGBDCaptureGui::exit);
-    ofAddListener(ofEvents.update, this, &ofxRGBDCaptureGui::update);
-    ofAddListener(ofEvents.draw, this, &ofxRGBDCaptureGui::draw);
+    ofAddListener(ofEvents().update, this, &ofxRGBDCaptureGui::update);
+    ofAddListener(ofEvents().draw, this, &ofxRGBDCaptureGui::draw);
     
     createRainbowPallet();
     depthImage.allocate(640, 480, OF_IMAGE_COLOR);
@@ -151,6 +153,14 @@ void ofxRGBDCaptureGui::update(ofEventArgs& args){
 
 void ofxRGBDCaptureGui::draw(ofEventArgs& args){
     
+    if(!providerSet || !depthImageProvider->deviceFound()){
+    	ofPushStyle();
+        ofSetColor(255, 0, 0);
+		ofDrawBitmapString("Camera not found. Plug and unplug the device and restart the application.", previewRect.x + 30, previewRect.y + 30);
+        ofPopStyle();
+        return;
+    }
+    
 	if(fullscreenPoints && currentTab == TabPlayback){
 		drawPointcloud(depthSequence.currentDepthRaw, true);
 		return;
@@ -184,16 +194,7 @@ void ofxRGBDCaptureGui::draw(ofEventArgs& args){
             updateDepthImage(depthSequence.currentDepthRaw);
             depthImage.draw(previewRect);
         }
-        
-//		if(currentRenderMode == RenderBW || currentRenderMode == RenderRainbow){
-//			depthSequence.currentDepthImage.draw(previewRect);
-//		}
-//		else {
-//			if(depthSequence.currentDepthRaw.isA != NULL){
-
-//			}
-//		}
-        
+    
 		//draw timeline
 		timeline.draw();
 	}

@@ -209,8 +209,8 @@ void ofxRGBDRenderer::update(){
 			//unsigned short z = *ptr;
 			IndexMap& indx = indexMap[indexPointer];
 			if(z != 0 && z < farClip){
-				xReal = (((float)x - principalPoint.x + xmult ) / imageSize.width) * z * fx;
-				yReal = (((float)y - principalPoint.y + ymult ) / imageSize.height) * z * fy;
+				xReal = (((float)x - principalPoint.x) / imageSize.width) * z * fx;
+				yReal = (((float)y - principalPoint.y) / imageSize.height) * z * fy;
 				//indx.vertexIndex = simpleMesh.getVertices().size();
                 indx.vertexIndex = vertexPointer;
 				indx.valid = true;
@@ -407,7 +407,7 @@ void ofxRGBDRenderer::setupProjectionUniforms(ofShader& theShader){
     ofMatrix4x4 rgbMatrix = (depthToRGBView * rgbProjection);
     ofVec2f dims = ofVec2f(currentRGBImage->getTextureReference().getWidth(), 
                            currentRGBImage->getTextureReference().getHeight());
-    theShader.setUniform2f("fudge", xmult/dims.x, ymult/dims.y);
+    theShader.setUniform2f("fudge", xmult, ymult);
     theShader.setUniform2f("dim", dims.x, dims.y);
     
     glMatrixMode(GL_TEXTURE);
