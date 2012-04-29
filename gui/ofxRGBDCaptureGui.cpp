@@ -153,37 +153,46 @@ void ofxRGBDCaptureGui::update(ofEventArgs& args){
 
 void ofxRGBDCaptureGui::draw(ofEventArgs& args){
     
-    if(!providerSet || !depthImageProvider->deviceFound()){
-    	ofPushStyle();
-        ofSetColor(255, 0, 0);
-		ofDrawBitmapString("Camera not found. Plug and unplug the device and restart the application.", previewRect.x + 30, previewRect.y + 30);
-        ofPopStyle();
-        return;
-    }
-    
 	if(fullscreenPoints && currentTab == TabPlayback){
 		drawPointcloud(depthSequence.currentDepthRaw, true);
 		return;
 	}
     
+    bool drawCamera = providerSet && depthImageProvider->deviceFound();    
 	if(currentTab == TabCalibrate){
-		depthImageProvider->getRawIRImage().draw(previewRect);
-		calibrationPreview.draw(0, btnheight*2);
-		alignment.drawDepthImages();
+        if(!drawCamera){
+            ofPushStyle();
+            ofSetColor(255, 0, 0);
+            ofDrawBitmapString("Camera not found. Plug and unplug the device and restart the application.", previewRect.x + 30, previewRect.y + 30);
+            ofPopStyle();
+        }
+        else{
+            depthImageProvider->getRawIRImage().draw(previewRect);
+            calibrationPreview.draw(0, btnheight*2);
+            alignment.drawDepthImages();            
+        }
 	}
 	else if(currentTab == TabRecord){
 
-        if( currentRenderMode == RenderPointCloud){
-        	drawPointcloud(depthImageProvider->getRawDepth(), false);
+        if(!drawCamera){
+            ofPushStyle();
+            ofSetColor(255, 0, 0);
+            ofDrawBitmapString("Camera not found. Plug and unplug the device and restart the application.", previewRect.x + 30, previewRect.y + 30);
+            ofPopStyle();
         }
         else{
-            ofPushStyle();
-            ofSetColor(255, 255, 255, 60);
-            ofLine(320, btnheight*2, 320, btnheight*2+480);
-            ofLine(0, btnheight*2+240, 640, btnheight*2+240);
-            ofPopStyle();
-            //depthImageProvider->getDepthImage().draw(previewRect);        
-            depthImage.draw(previewRect);
+            if( currentRenderMode == RenderPointCloud){
+                drawPointcloud(depthImageProvider->getRawDepth(), false);
+            }
+            else{
+                ofPushStyle();
+                ofSetColor(255, 255, 255, 60);
+                ofLine(320, btnheight*2, 320, btnheight*2+480);
+                ofLine(0, btnheight*2+240, 640, btnheight*2+240);
+                ofPopStyle();
+                //depthImageProvider->getDepthImage().draw(previewRect);        
+                depthImage.draw(previewRect);
+            }
         }
 	}
 	else if(currentTab == TabPlayback) {
@@ -488,6 +497,8 @@ void ofxRGBDCaptureGui::updateTakeButtons(){
 	vector<Take*>& takes = recorder.getTakes();
 	
 	for(int i = 0; i < btnTakes.size(); i++){
+        btnTakes[i].button->disableAllEvents();
+        btnTakes[i].button->enabled = false;
 		delete btnTakes[i].button;
 	}
     
@@ -615,13 +626,6 @@ void ofxRGBDCaptureGui::updateDepthImage(ofShortPixels& pixels){
     }
     else{
         recorder.compressorRef().convertTo8BitImage(pixels, depthImage);
-//        for(int i = 0; i < 640*480; i++){
-//            //int lookup = ofMap( depthPixels.getPixels()[i], 0, max_depth, 0, 255, true);
-//            int color = 255 * pixels.getPixels()[i] / max_depth;
-//            depthImage.getPixels()[(i*3)+0] = color;
-//            depthImage.getPixels()[(i*3)+1] = color;
-//            depthImage.getPixels()[(i*3)+2] = color;
-//        }
     }
     
     depthImage.update();

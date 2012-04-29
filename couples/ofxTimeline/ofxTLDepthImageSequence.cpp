@@ -328,6 +328,10 @@ void ofxTLDepthImageSequence::calculateFramePositions(){
 	if(!sequenceLoaded){
 		return;
 	}
+    
+    if( bounds.height < 10){
+        return;
+    }
 	
 	int frameWidth = int( bounds.height * videoThumbs[0].targetWidth / videoThumbs[0].targetHeight );
 	int totalPixels = int( bounds.width / zoomBounds.span() );

@@ -38,9 +38,6 @@ class ofxRGBDRenderer {
 
     ofBaseHasTexture& getRGBTexture();
 
-	//used for supplying a preview texture that is smaller than the image was calibrated on.
-	//helps for playback vs rendering
-	void setTextureScale(float xTextureScale, float yTextureScale);
 	
 	void update();
 
@@ -88,11 +85,12 @@ class ofxRGBDRenderer {
   protected:	
 
 	int simplify;
-	float xTextureScale;
-	float yTextureScale;
+//	float xTextureScale;
+//	float yTextureScale;
 
     bool shaderBound;
     bool rendererBound;
+    bool hasVerts;
     
 	Calibration depthCalibration, rgbCalibration;    
 	Mat rotationDepthToRGB, translationDepthToRGB;

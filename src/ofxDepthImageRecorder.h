@@ -87,9 +87,11 @@ class ofxDepthImageRecorder {
     
 	int framesToCompress;
 	
-	unsigned short* encodingBuffer;
-	unsigned short* lastFramePixs;
-	
+	//unsigned short* encodingBuffer;
+	//unsigned short* lastFramePixs;
+	ofShortPixels encodingBuffer;
+    ofShortPixels lastFramePixs;
+    
 	int folderCount;
     string currentFolderPrefix;
 	string targetDirectory;

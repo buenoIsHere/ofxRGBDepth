@@ -22,8 +22,8 @@ ofxRGBDRenderer::ofxRGBDRenderer(){
 	ZFuzz = 0;
     meshRotate = ofVec3f(0,0,0);
     
-    xTextureScale = 1;
-	yTextureScale = 1;
+//    xTextureScale = 1;
+//	yTextureScale = 1;
     
     calculateNormals = false;
     
@@ -41,7 +41,7 @@ ofxRGBDRenderer::ofxRGBDRenderer(){
     reloadShader();
     setSimplification(1);
     
-
+    hasVerts = false;
 }
 
 ofxRGBDRenderer::~ofxRGBDRenderer(){
@@ -152,10 +152,10 @@ void ofxRGBDRenderer::setDepthImage(unsigned short* depthPixelsRaw){
 	hasDepthImage = true;
 }
 
-void ofxRGBDRenderer::setTextureScale(float xs, float ys){
-	xTextureScale = xs;
-	yTextureScale = ys;
-}
+//void ofxRGBDRenderer::setTextureScale(float xs, float ys){
+//	xTextureScale = xs;
+//	yTextureScale = ys;
+//}
 
 Calibration& ofxRGBDRenderer::getDepthCalibration(){
 	return depthCalibration;
@@ -201,22 +201,20 @@ void ofxRGBDRenderer::update(){
 	float xReal,yReal;
     int indexPointer = 0;
     int vertexPointer = 0;
+    hasVerts = false;
 	unsigned short* ptr = undistortedDepthImage.getPixels();
 	for(int y = 0; y < h; y += simplify) {
 		for(int x = 0; x < w; x += simplify) {
             vertexPointer = y*w+x;
 			unsigned short z = undistortedDepthImage.getPixels()[y*w+x];
-			//unsigned short z = *ptr;
 			IndexMap& indx = indexMap[indexPointer];
 			if(z != 0 && z < farClip){
 				xReal = (((float)x - principalPoint.x) / imageSize.width) * z * fx;
 				yReal = (((float)y - principalPoint.y) / imageSize.height) * z * fy;
-				//indx.vertexIndex = simpleMesh.getVertices().size();
                 indx.vertexIndex = vertexPointer;
 				indx.valid = true;
-				//ofVec3f pt = ofVec3f(xReal, yReal, z);
-				//simpleMesh.addVertex(pt);
                 simpleMesh.setVertex(vertexPointer, ofVec3f(xReal, yReal, z));
+                hasVerts = true;
 			}
 			else {
 				indx.valid = false;
@@ -228,10 +226,7 @@ void ofxRGBDRenderer::update(){
 
 	if(debug) cout << "unprojection " << simpleMesh.getVertices().size() << " took " << ofGetElapsedTimeMillis() - start << endl;
 	
-    if(simpleMesh.getVertices().size() < 3){
-		ofLogError("ofxRGBDRenderer -- No verts");
-		return;
-	}
+    
 
 	simpleMesh.clearIndices();
 	set<ofIndexType> calculatedNormals;
@@ -239,6 +234,7 @@ void ofxRGBDRenderer::update(){
     if(calculateNormals){
 		simpleMesh.getNormals().resize(simpleMesh.getVertices().size());
 	}
+    
 	for(int i = 0; i < baseIndeces.size(); i+=3){
 		if(indexMap[baseIndeces[i]].valid &&
 		   indexMap[baseIndeces[i+1]].valid &&
@@ -395,7 +391,6 @@ void ofxRGBDRenderer::unbindRenderer(){
         }
 	}
     
-//	glDisable(GL_DEPTH_TEST);
 	
 	ofPopMatrix();
     rendererBound = false;
@@ -423,80 +418,25 @@ void ofxRGBDRenderer::restortProjection(){
 }
 
 void ofxRGBDRenderer::drawMesh(bool useShader) {
-	
-//	if(!hasDepthImage){
-//     	ofLogError("ofxRGBDRenderer::update() -- no depth image");
-//        return;
-//    }
-//    
-//    if(!calibrationSetup){
-//     	ofLogError("ofxRGBDRenderer::update() -- no calibration");
-//        return;
-//    }
-//	
-//	//glPushMatrix();
-//    ofPushMatrix();
-//    ofScale(1, -1, 1);
-//    ofRotate(meshRotate.x,1,0,0);
-//    ofRotate(meshRotate.y,0,1,0);
-//    ofRotate(meshRotate.z,0,0,1);
-//	
-//	glEnable(GL_DEPTH_TEST);
-//	if(hasRGBImage){
-//		currentRGBImage->getTextureReference().bind();
-//	}
+	if(!hasVerts) return;
+    
     if(bindRenderer(useShader)){
 		simpleMesh.drawFaces();
         unbindRenderer();
     }
-    
-//	if(hasRGBImage){
-//		currentRGBImage->getTextureReference().unbind();
-//	}
-//    
-//	glDisable(GL_DEPTH_TEST);
-//	
-//	ofPopMatrix();
 }
 
 void ofxRGBDRenderer::drawPointCloud(bool useShader) {
-	
-//	if(!hasDepthImage){
-//     	ofLogError("ofxRGBDRenderer::update() -- no depth image");
-//        return;
-//    }
-//    
-//    if(!calibrationSetup){
-//     	ofLogError("ofxRGBDRenderer::update() -- no calibration");
-//        return;
-//    }
-//	
-//    ofPushMatrix();
-//    ofScale(1, -1, 1);
-//    ofRotate(meshRotate.x,1,0,0);
-//    ofRotate(meshRotate.y,0,1,0);
-//    ofRotate(meshRotate.z,0,0,1);
-//    
-//    glEnable(GL_DEPTH_TEST);
-//	if(hasRGBImage){
-//		currentRGBImage->getTextureReference().bind();
-//	}
-//	
+	if(!hasVerts) return;
     if(bindRenderer(useShader)){
 	    simpleMesh.drawVertices();
         unbindRenderer();
     }
     
-//	if(hasRGBImage){
-//		currentRGBImage->getTextureReference().unbind();
-//	}
-//    
-//	glDisable(GL_DEPTH_TEST);
-//	
-//	ofPopMatrix();
 }
 
 void ofxRGBDRenderer::drawWireFrame(bool useShader) {
+    if(!hasVerts) return;
 	if(bindRenderer(useShader)){
 		simpleMesh.drawWireframe();
         unbindRenderer();

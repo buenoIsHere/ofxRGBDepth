@@ -15,6 +15,7 @@ void ofxRGBDEncoderThread::threadedFunction(){
     shutdown = false;
 	while(isThreadRunning()){
 		delegate->encoderThreadCallback();
+        ofSleepMillis(2);
 	}
     shutdown = true;
 }
@@ -23,6 +24,8 @@ void ofxRGBDRecorderThread::threadedFunction(){
     shutdown = false;
 	while(isThreadRunning()){
 		delegate->recorderThreadCallback();
+        ofSleepMillis(2);
+
 	}
     shutdown = true;
 }
@@ -33,24 +36,25 @@ ofxDepthImageRecorder::ofxDepthImageRecorder()
 	encoderThread(this)
 {
 	recording = false;
-	lastFramePixs = NULL;
-	encodingBuffer = NULL;
+//	lastFramePixs = NULL;
+//	encodingBuffer = NULL;
 	framesToCompress = 0;
     compressingTakeIndex = 0;
 }
 
 ofxDepthImageRecorder::~ofxDepthImageRecorder(){
-	if(lastFramePixs != NULL){
-		delete lastFramePixs;
-	}
+//	if(lastFramePixs != NULL){
+//		delete lastFramePixs;
+//	}
 }
 
 void ofxDepthImageRecorder::setup(){
     folderCount = 0;
 	currentFrame = 0;
 	
-	lastFramePixs = new unsigned short[640*480];
-	memset(lastFramePixs, 0, sizeof(unsigned short)*640*480);
+//	lastFramePixs = new unsigned short[640*480];
+    lastFramePixs.allocate(640, 480, OF_IMAGE_GRAYSCALE);
+	memset(lastFramePixs.getPixels(), 0, sizeof(unsigned short)*640*480);
 
     recorderThread.startThread(true, false);
 	encoderThread.startThread(true, false);
@@ -82,13 +86,13 @@ bool ofxDepthImageRecorder::addImage(ofShortPixels& image){
 bool ofxDepthImageRecorder::addImage(unsigned short* image){
 	//confirm that it isn't a duplicate of the most recent frame;
 	int framebytes = 640*480*sizeof(unsigned short);
-	if(0 != memcmp(image, lastFramePixs, framebytes)){
+	if(0 != memcmp(image, lastFramePixs.getPixels(), framebytes)){
 		QueuedFrame frame;
         //TODO use high res timer!!!
 		frame.timestamp = msaTimer.getAppTimeMillis() - recordingStartTime;
 		frame.pixels = new unsigned short[640*480];
 		memcpy(frame.pixels, image, framebytes);
-		memcpy(lastFramePixs, image, framebytes);
+		memcpy(lastFramePixs.getPixels(), image, framebytes);
 		
 		char filenumber[512];
 		sprintf(filenumber, "%05d", currentFrame); 
@@ -196,15 +200,12 @@ void ofxDepthImageRecorder::updateTakes(){
 }
 
 ofxDepthImageCompressor& ofxDepthImageRecorder::compressorRef(){
-    
+    return compressor;
 }
 
 void ofxDepthImageRecorder::shutdown(){
 	recorderThread.stopThread(true);
 	encoderThread.stopThread(true);
-    while(!encoderThread.shutdown || !recorderThread.shutdown){
-   		ofSleepMillis(2);
-  	}
 }
 											  
 void ofxDepthImageRecorder::recorderThreadCallback(){
@@ -233,7 +234,7 @@ void ofxDepthImageRecorder::recorderThreadCallback(){
 			ofLogError("ofxDepthImageRecorder -- Save Failed! readding to queue");
 		}
 	}
-	ofSleepMillis(2);
+
 }
 
 void ofxDepthImageRecorder::encoderThreadCallback(){
@@ -249,60 +250,63 @@ void ofxDepthImageRecorder::encoderThreadCallback(){
 	}
 	encoderThread.unlock();
 
-	if(foundDir){
-        
-		//start to convert
-        if(take->path == ""){
-            ofLogError("ofxDepthImageCompressor -- Take has empty path string");
-			return;
-        }
-		ofDirectory rawDir(take->path);
-        if(rawDir.exists() && rawDir.isDirectory()){
-        	
-            rawDir.allowExt("raw");
-            rawDir.allowExt("xkcd");
-            rawDir.listDir();
-            if(encodingBuffer == NULL){
-                encodingBuffer = new unsigned short[640*480];
-            }
-            ofDirectory convertedDir(take->path);
-            convertedDir.allowExt("png");
-            convertedDir.listDir();
-            
-            take->numFrames = rawDir.numFiles() + convertedDir.numFiles();
-            take->framesConverted = convertedDir.numFiles();
-            ofLogVerbose("ofxDepthImageCompressor -- Starting to convert " + ofToString(rawDir.numFiles()) + " in " + take->path);
-            framesToCompress = rawDir.numFiles();
-            for(int i = 0; i < rawDir.numFiles(); i++){
-                
-                //don't do this while recording
-                while(recording){
-    //                ofLogWarning("ofxDepthImageRecorder -- paused converting while recording...");
-                    ofSleepMillis(25);
-                }
-                
-                if(!encoderThread.isThreadRunning()){
-                    ofLogWarning( "ofxDepthImageRecorder -- Breaking conversion because recorder isn't running");
-                    break;
-                }
-                
-                string path = rawDir.getPath(i);
-                //READ IN THE RAW FILE
-                compressor.readDepthFrame(path, encodingBuffer);
-                //COMPRESS TO PNG
-                compressor.saveToCompressedPng(ofFilePath::removeExt(path)+".png", encodingBuffer);
-                //DELETE the file
-                rawDir.getFile(i, ofFile::ReadOnly, true).remove();
-                //UPDATE COUNTS
-                framesToCompress--;
-                take->framesConverted++;
-            }
-        }
-        else {
-            ofLogError("ofxDepthImageRecorder::encoderThreadCallback() -- Does not exist or is not directory " + take->path);
-        }
-	}
+	if(!foundDir) {
+    	return;
+    }
     
-	ofSleepMillis(2);
+    //start to convert
+    if(take->path == ""){
+        ofLogError("ofxDepthImageCompressor -- Take has empty path string");
+        return;
+    }
+    
+    ofDirectory rawDir(take->path);
+    if(!rawDir.exists() || !rawDir.isDirectory()){
+        ofLogError("ofxDepthImageRecorder::encoderThreadCallback() -- Does not exist or is not directory " + take->path);
+        return;
+    }    
+        
+    rawDir.allowExt("raw");
+    rawDir.allowExt("xkcd");
+    rawDir.listDir();
+    //if(encodingBuffer == NULL){
+    if(!encodingBuffer.isAllocated()){
+        //encodingBuffer = new unsigned short[640*480];
+        encodingBuffer.allocate(640,480, OF_IMAGE_GRAYSCALE);
+    }
+    
+    ofDirectory convertedDir(take->path);
+    convertedDir.allowExt("png");
+    convertedDir.listDir();
+    
+    take->numFrames = rawDir.numFiles() + convertedDir.numFiles();
+    take->framesConverted = convertedDir.numFiles();
+    ofLogVerbose("ofxDepthImageCompressor -- Starting to convert " + ofToString(rawDir.numFiles()) + " in " + take->path);
+    framesToCompress = rawDir.numFiles();
+    for(int i = 0; i < rawDir.numFiles(); i++){
+        
+        //don't do this while recording
+        while(recording){
+//                ofLogWarning("ofxDepthImageRecorder -- paused converting while recording...");
+            ofSleepMillis(25);
+        }
+        
+        if(!encoderThread.isThreadRunning()){
+            ofLogWarning( "ofxDepthImageRecorder -- Breaking conversion because recorder isn't running");
+            break;
+        }
+        
+        string path = rawDir.getPath(i);
+        //READ IN THE RAW FILE
+        compressor.readDepthFrame(path, encodingBuffer.getPixels());
+        //COMPRESS TO PNG
+        compressor.saveToCompressedPng(ofFilePath::removeExt(path)+".png", encodingBuffer.getPixels());
+        //DELETE the file
+        //rawDir.getFile(i, ofFile::ReadOnly, true).remove();
+        ofFile::removeFile(rawDir.getPath(i));
+        //UPDATE COUNTS
+        framesToCompress--;
+        take->framesConverted++;
+    }
 }
 
