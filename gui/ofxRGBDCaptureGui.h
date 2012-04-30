@@ -61,8 +61,8 @@ class ofxRGBDCaptureGui : public ofxMSAInteractiveObjectDelegate {
 
     void windowResized(ofResizeEventArgs& args);
     
-    //void exit(ofEventArgs& args);
-    void exit();
+    void exit(ofEventArgs& args);
+    //void exit();
     
   protected:
     ofxTimeline timeline;

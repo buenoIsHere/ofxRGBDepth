@@ -112,7 +112,8 @@ void ofxRGBDCaptureGui::setup(){
     ofRegisterMouseEvents(this);
     ofRegisterKeyEvents(this);    
     ofAddListener(ofEvents().windowResized, this, &ofxRGBDCaptureGui::windowResized);
-   // ofAddListener(ofEvents.exit, this, &ofxRGBDCaptureGui::exit);
+    //ofAddListener(ofEvents().exit, this, &ofxRGBDCaptureGui::exit);
+    ofAddListener(ofEvents().exit, this, &ofxRGBDCaptureGui::exit);
     ofAddListener(ofEvents().update, this, &ofxRGBDCaptureGui::update);
     ofAddListener(ofEvents().draw, this, &ofxRGBDCaptureGui::draw);
     
@@ -335,11 +336,12 @@ void ofxRGBDCaptureGui::objectDidRelease(ofxMSAInteractiveObject* object, int x,
 	}
 }
 
-void ofxRGBDCaptureGui::exit(){
-    //causes crashing...
+void ofxRGBDCaptureGui::exit(ofEventArgs& args){
+
+    calibrationPreview.quit();
 //  recorder.shutdown();
     if(providerSet){
-//		depthImageProvider->close();
+		depthImageProvider->close();
         providerSet = false; 
     } 
 }
