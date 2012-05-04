@@ -85,8 +85,6 @@ class ofxRGBDRenderer {
   protected:	
 
 	int simplify;
-//	float xTextureScale;
-//	float yTextureScale;
 
     bool shaderBound;
     bool rendererBound;
@@ -108,13 +106,15 @@ class ofxRGBDRenderer {
 	vector<Point2f> undistortedPoints;
 	
 	ofMesh simpleMesh;
+    //ofVboMesh simpleMesh; 
     vector<ofIndexType> baseIndeces;
     vector<ofVec2f> texcoords;
     vector<ofVec3f> vertices;
 	vector<IndexMap> indexMap;
 
-	ofMatrix4x4 depthToRGBView;// = ofxCv::makeMatrix(rotationDepthToRGB, translationDepthToRGB);
+	ofMatrix4x4 depthToRGBView;
 	ofMatrix4x4 rgbProjection;
+    ofMatrix4x4 rgbMatrix;
 
 	ofShader shader;
 };

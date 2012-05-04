@@ -337,17 +337,19 @@ bool ofxRGBDRenderer::bindRenderer(bool useShader){
     ofRotate(meshRotate.y,0,1,0);
     ofRotate(meshRotate.z,0,0,1);
 	
-    
-    //    ofPushMatrix();
-    //    glMultMatrixf(rgbMatrix.getInverse().getPtr());
-    //    ofNoFill();
-    //    ofBox(2.0f);
-    //    ofPopMatrix();
-    
-    //    if(ofGetKeyPressed('v'))
-    //        cout << "view " <<depthToRGBView << endl;
-    //    else if (ofGetKeyPressed('p'))
-    //        cout << "projection " << rgbProjection << endl;
+
+//    ofPushStyle();
+//    ofPushMatrix();
+//    glMultMatrixf(rgbMatrix.getInverse().getPtr());
+//    ofNoFill();
+//    ofBox(2.0f);
+//    ofPopMatrix();
+//    ofPopStyle();
+
+//    if(ofGetKeyPressed('v'))
+//        cout << "view " <<depthToRGBView << endl;
+//    else if (ofGetKeyPressed('p'))
+//        cout << "projection " << rgbProjection << endl;
 	//cout << rgbMatrix << endl;
     
 	if(hasRGBImage){
@@ -398,8 +400,8 @@ void ofxRGBDRenderer::unbindRenderer(){
 
 
 void ofxRGBDRenderer::setupProjectionUniforms(ofShader& theShader){
-    
-    ofMatrix4x4 rgbMatrix = (depthToRGBView * rgbProjection);
+
+    rgbMatrix = (depthToRGBView * rgbProjection);
     ofVec2f dims = ofVec2f(currentRGBImage->getTextureReference().getWidth(), 
                            currentRGBImage->getTextureReference().getHeight());
     theShader.setUniform2f("fudge", xmult, ymult);

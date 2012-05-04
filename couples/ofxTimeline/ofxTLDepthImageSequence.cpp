@@ -271,7 +271,7 @@ bool ofxTLDepthImageSequence::loadSequence(string seqdir){
 		ofLogError("ofxTLDepthImageSequence -- sequence directory " + seqdir + " is empty!");
 		return false;
 	}
-	
+//	cout << "TEST num file sis " << numFiles << " for " << seqdir << endl;  
 	for(int i = 0; i < numFiles; i++){
 		if(sequenceList.getName(i).find("poster") != string::npos){
 			cout << "discarding poster frame " << sequenceList.getPath(i) << endl;
@@ -300,7 +300,7 @@ bool ofxTLDepthImageSequence::loadSequence(string seqdir){
 		videoThumbs.push_back(t);
 	}
 	
-	cout << "sequence is loaded " << videoThumbs.size() << endl;
+//	cout << "sequence is loaded " << videoThumbs.size() << endl;
     //only generate if we already had a sequence loaded.
     if(sequenceLoaded){
         cout << "generating thumbnails" << endl;
