@@ -82,6 +82,13 @@ class ofxRGBDRenderer {
 	Calibration& getRGBCalibration();
 	Calibration& getDepthCalibration();
 	
+	float luminosityEffect;
+	float time;
+	float rangescale;
+	float perlinAmount;
+	float sinePeriod;
+	float sineAmount;
+	
   protected:	
 
 	int simplify;
@@ -117,4 +124,7 @@ class ofxRGBDRenderer {
 	ofMatrix4x4 rgbProjection;
 
 	ofShader shader;
+	
+
+	
 };

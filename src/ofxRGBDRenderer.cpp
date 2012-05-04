@@ -106,6 +106,7 @@ void ofxRGBDRenderer::setSimplification(int level){
 	
 	indexMap.clear();
 	simpleMesh.clearVertices();
+	simpleMesh.clearColors();
 	for (int y = 0; y < 480; y+=simplify){
 		for (int x=0; x < 640; x+=simplify){
 			IndexMap m;
@@ -116,6 +117,7 @@ void ofxRGBDRenderer::setSimplification(int level){
 	for (int y = 0; y < 640; y++){
 		for (int x=0; x < 480; x++){
 			simpleMesh.addVertex(ofVec3f(0,0,0));
+			simpleMesh.addColor(ofFloatColor(1.0,1.0,1.0));
 		}
 	}
 	//cout << "AFTER SETUP base indeces? " << baseIndeces.size() << " index map? " << indexMap.size() << endl;
@@ -405,6 +407,13 @@ void ofxRGBDRenderer::setupProjectionUniforms(ofShader& theShader){
     theShader.setUniform2f("fudge", xmult, ymult);
     theShader.setUniform2f("dim", dims.x, dims.y);
     
+	theShader.setUniform1f("luminosityEffect",luminosityEffect);
+	theShader.setUniform1f("time",time);
+	theShader.setUniform1f("rangescale", rangescale);
+	theShader.setUniform1f("perlinAmount", perlinAmount);
+	theShader.setUniform1f("sinePeriod",sinePeriod);
+	theShader.setUniform1f("sineAmount",sineAmount);	
+	
     glMatrixMode(GL_TEXTURE);
     glPushMatrix();
     glLoadMatrixf(rgbMatrix.getPtr());
