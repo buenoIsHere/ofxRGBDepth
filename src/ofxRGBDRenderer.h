@@ -82,6 +82,8 @@ class ofxRGBDRenderer {
 	Calibration& getRGBCalibration();
 	Calibration& getDepthCalibration();
 	
+    bool isVertexValid(int index);
+    bool forceUndistortOff;
   protected:	
 
 	int simplify;
@@ -117,4 +119,6 @@ class ofxRGBDRenderer {
     ofMatrix4x4 rgbMatrix;
 
 	ofShader shader;
+    ofVec3f center;
+    
 };

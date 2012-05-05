@@ -22,9 +22,6 @@ ofxRGBDRenderer::ofxRGBDRenderer(){
 	ZFuzz = 0;
     meshRotate = ofVec3f(0,0,0);
     
-//    xTextureScale = 1;
-//	yTextureScale = 1;
-    
     calculateNormals = false;
     
 	hasDepthImage = false;
@@ -33,7 +30,6 @@ ofxRGBDRenderer::ofxRGBDRenderer(){
     shaderBound = false;
     rendererBound = false;
     
-	farClip = 5000;
 
 	mirror = false;
 	calibrationSetup = false;
@@ -42,6 +38,7 @@ ofxRGBDRenderer::ofxRGBDRenderer(){
     setSimplification(1);
     
     hasVerts = false;
+    forceUndistortOff = false;
 }
 
 ofxRGBDRenderer::~ofxRGBDRenderer(){
@@ -152,11 +149,6 @@ void ofxRGBDRenderer::setDepthImage(unsigned short* depthPixelsRaw){
 	hasDepthImage = true;
 }
 
-//void ofxRGBDRenderer::setTextureScale(float xs, float ys){
-//	xTextureScale = xs;
-//	yTextureScale = ys;
-//}
-
 Calibration& ofxRGBDRenderer::getDepthCalibration(){
 	return depthCalibration;
 }
@@ -173,8 +165,8 @@ void ofxRGBDRenderer::update(){
         return;
     }
 
-    if(!calibrationSetup){
-     	ofLogError("ofxRGBDRenderer::update() -- no calibration");
+    if(!calibrationSetup && hasRGBImage){
+     	ofLogError("ofxRGBDRenderer::update() -- no calibration for RGB Image");
         return;
     }
 
@@ -193,7 +185,13 @@ void ofxRGBDRenderer::update(){
 	Point2d principalPoint = depthCalibration.getUndistortedIntrinsics().getPrincipalPoint();
 	cv::Size imageSize = depthCalibration.getUndistortedIntrinsics().getImageSize();
 	
-	depthCalibration.undistort( toCv(currentDepthImage), toCv(undistortedDepthImage), CV_INTER_NN);
+
+    if(!forceUndistortOff){
+        depthCalibration.undistort( toCv(currentDepthImage), toCv(undistortedDepthImage), CV_INTER_NN);
+    }
+    else {
+        undistortedDepthImage = currentDepthImage;
+    }
 	
     //start
 	int imageIndex = 0;
@@ -223,11 +221,9 @@ void ofxRGBDRenderer::update(){
 		}
 	}
     //end
-
+    if(debug && !hasVerts) cout << "warning no verts with far clip " << farClip << endl; 
 	if(debug) cout << "unprojection " << simpleMesh.getVertices().size() << " took " << ofGetElapsedTimeMillis() - start << endl;
 	
-    
-
 	simpleMesh.clearIndices();
 	set<ofIndexType> calculatedNormals;
 	start = ofGetElapsedTimeMillis();
@@ -259,7 +255,7 @@ void ofxRGBDRenderer::update(){
 	}
 	
 	if(debug) cout << "indexing  " << simpleMesh.getIndices().size() << " took " << ofGetElapsedTimeMillis() - start << endl;
-
+    
 //	if(hasRGBImage){
 //		start = ofGetElapsedTimeMillis();
 		
@@ -306,6 +302,10 @@ void ofxRGBDRenderer::update(){
 		*/
 //		if(debug) cout << "gen tex coords took " << (ofGetElapsedTimeMillis() - start) << endl;
 //	}
+}
+
+bool ofxRGBDRenderer::isVertexValid(int index){
+    return indexMap[index].valid;
 }
 
 ofMesh& ofxRGBDRenderer::getMesh(){
@@ -357,17 +357,6 @@ bool ofxRGBDRenderer::bindRenderer(bool useShader){
         if(useShader){
             shader.begin();	
             setupProjectionUniforms(shader);
-            /*
-            ofVec2f dims = ofVec2f(currentRGBImage->getTextureReference().getWidth(), 
-                                   currentRGBImage->getTextureReference().getHeight());
-            shader.setUniform2f("fudge", xmult/dims.x, ymult/dims.y);
-            shader.setUniform2f("dim", dims.x, dims.y);
-            
-            glMatrixMode(GL_TEXTURE);
-            glPushMatrix();
-            glLoadMatrixf(rgbMatrix.getPtr());
-            glMatrixMode(GL_MODELVIEW);  
-             */
             shaderBound = true;
              
         }

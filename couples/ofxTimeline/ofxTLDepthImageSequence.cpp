@@ -38,8 +38,6 @@ void ofxTLDepthImageSequence::setup(){
 	enable();
 	currentDepthRaw.allocate(640, 480, OF_IMAGE_GRAYSCALE);
 	thumbnailDepthRaw.allocate(640, 480, OF_IMAGE_GRAYSCALE);
-//	currentDepthRaw = new unsigned short[640*480];
-//	thumbnailDepthRaw = new unsigned short[640*480];
     
 	currentDepthImage = decoder.convertTo8BitImage(currentDepthRaw);
 }
@@ -156,6 +154,9 @@ void ofxTLDepthImageSequence::mouseMoved(ofMouseEventArgs& args){
 }
 
 void ofxTLDepthImageSequence::mouseDragged(ofMouseEventArgs& args, bool snapped){
+    
+    if(!isLoaded()) return;
+    
 	if( bounds.inside(args.x, args.y) ){
 		int index = indexForScreenX(args.x, videoThumbs.size());
 		selectFrame(index);
@@ -190,6 +191,7 @@ void ofxTLDepthImageSequence::selectFrame(int frame){
 	selectedFrame = ofClamp(frame, 0, videoThumbs.size()-1);
 	decoder.readCompressedPng(videoThumbs[selectedFrame].sourcepath, currentDepthRaw.getPixels());
 	currentDepthImage = decoder.convertTo8BitImage(currentDepthRaw);
+    frameIsNew = true;
 }
 
 void ofxTLDepthImageSequence::selectTime(long timeStampInMillis){
@@ -241,6 +243,12 @@ bool ofxTLDepthImageSequence::loadSequence(){
 
 bool ofxTLDepthImageSequence::isLoaded(){
 	return sequenceLoaded;
+}
+
+bool ofxTLDepthImageSequence::isFrameNew(){
+    bool result = frameIsNew;
+    frameIsNew = false;
+    return result;
 }
 
 bool ofxTLDepthImageSequence::loadSequence(string seqdir){

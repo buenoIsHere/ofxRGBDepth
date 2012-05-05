@@ -43,7 +43,8 @@ class ofxTLDepthImageSequence : public ofxTLElement {
 	bool loadSequence();
 	bool loadSequence(string sequenceDirectory);
 	bool isLoaded();
-	
+	bool isFrameNew();
+    
 	void playbackStarted(ofxTLPlaybackEventArgs& args);
 	void playbackEnded(ofxTLPlaybackEventArgs& args);
 	void playbackLooped(ofxTLPlaybackEventArgs& args);
@@ -87,7 +88,7 @@ class ofxTLDepthImageSequence : public ofxTLElement {
 	void calculateFramePositions();
 	void generateVideoThumbnails();
 	void generateThumbnailForFrame(int index);
-	
+	bool frameIsNew;
 	
 	string sequenceDirectory;
 	string thumbDirectory;
