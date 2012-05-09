@@ -39,6 +39,8 @@ ofxRGBDRenderer::ofxRGBDRenderer(){
     
     hasVerts = false;
     forceUndistortOff = false;
+    addColors = false;
+    calculateTextureCoordinates = false;
 }
 
 ofxRGBDRenderer::~ofxRGBDRenderer(){
@@ -97,24 +99,44 @@ void ofxRGBDRenderer::setSimplification(int level){
 			baseIndeces.push_back(a);
 			baseIndeces.push_back(b);
 			baseIndeces.push_back(c);
-
 		}
 	}		
 	
 	indexMap.clear();
-	simpleMesh.clearVertices();
 	for (int y = 0; y < 480; y+=simplify){
 		for (int x=0; x < 640; x+=simplify){
 			IndexMap m;
+            m.valid = false;
 			indexMap.push_back(m);
 		}
 	}
 
+	simpleMesh.clearVertices();
 	for (int y = 0; y < 640; y++){
 		for (int x=0; x < 480; x++){
 			simpleMesh.addVertex(ofVec3f(0,0,0));
 		}
 	}
+    
+    
+    if(addColors){
+        simpleMesh.clearColors();
+        for (int y = 0; y < 640; y++){
+            for (int x=0; x < 480; x++){
+                simpleMesh.addColor(ofFloatColor(1.0,1.0,1.0,1.0));
+            }
+        }        
+    }
+    
+    if(calculateTextureCoordinates){
+        simpleMesh.clearTexCoords();
+        for (int y = 0; y < 640; y++){
+            for (int x=0; x < 480; x++){
+                simpleMesh.addTexCoord(ofVec2f(0,0));
+            }
+        }        
+    }
+    
 	//cout << "AFTER SETUP base indeces? " << baseIndeces.size() << " index map? " << indexMap.size() << endl;
 }
 
@@ -221,6 +243,7 @@ void ofxRGBDRenderer::update(){
 		}
 	}
     //end
+    
     if(debug && !hasVerts) cout << "warning no verts with far clip " << farClip << endl; 
 	if(debug) cout << "unprojection " << simpleMesh.getVertices().size() << " took " << ofGetElapsedTimeMillis() - start << endl;
 	
@@ -256,58 +279,51 @@ void ofxRGBDRenderer::update(){
 	
 	if(debug) cout << "indexing  " << simpleMesh.getIndices().size() << " took " << ofGetElapsedTimeMillis() - start << endl;
     
-//	if(hasRGBImage){
-//		start = ofGetElapsedTimeMillis();
-		
-		//Mat pcMat = Mat(toCv(mesh));
-		//Mat pcMat = Mat(toCv(simpleMesh));
-		
-		//cout << "PC " << pcMat << endl;
-		//	cout << "Rot Depth->Color " << rotationDepthToColor << endl;
-		//	cout << "Trans Depth->Color " << translationDepthToColor << endl;
-		//	cout << "Intrs Cam " << colorCalibration.getDistortedIntrinsics().getCameraMatrix() << endl;
-		//	cout << "Intrs Dist Coef " << colorCalibration.getDistCoeffs() << endl;
-		
-//		imagePoints.clear();
-
-
-		//--
-		//load projection matrix
-//		ofPushView();
-//		rgbCalibration.getDistortedIntrinsics().loadProjectionMatrix();
-//		glGetFloatv(GL_PROJECTION_MATRIX, rgbProjection.getPtr());
-//		ofPopView();
-		//--
-
-		/*
-		projectPoints(pcMat,
-					  rotationDepthToRGB, translationDepthToRGB,
-					  rgbCalibration.getDistortedIntrinsics().getCameraMatrix(),
-					  rgbCalibration.getDistCoeffs(),
-					  imagePoints);
-		*/
-//		if(debug) cout << "project points " << (ofGetElapsedTimeMillis() - start) << endl;
-//		
-//		start = ofGetElapsedTimeMillis();
-		/*
-		for(int i = 0; i < imagePoints.size(); i++) {
-			if(mirror){
-				simpleMesh.addTexCoord(ofVec2f( currentRGBImage->getTextureReference().getWidth() - imagePoints[i].x * xTextureScale, imagePoints[i].y * yTextureScale));
-			}
-			else{
-				simpleMesh.addTexCoord(ofVec2f(imagePoints[i].x * xTextureScale, 
-                                               imagePoints[i].y * yTextureScale));			
-			}
-		}
-		*/
+    //normally this is done in the shader, but sometimes we want to have them on the CPU for doing special processing
+	if(calculateTextureCoordinates){
+        generateTextureCoordinates();
 //		if(debug) cout << "gen tex coords took " << (ofGetElapsedTimeMillis() - start) << endl;
-//	}
+	}
+}
+
+void ofxRGBDRenderer::generateTextureCoordinates(){
+    if(!calibrationSetup){
+        ofLogError("ofxRGBDRenderer::generateTextureCoordinates -- no calibration set up");
+        return;
+    }
+    
+    if(!simpleMesh.hasTexCoords()){
+        for (int y = 0; y < 640*480; y++){
+            simpleMesh.addTexCoord(ofVec2f(0,0));
+        } 
+    }
+    
+    Mat pcMat = Mat(toCv(simpleMesh));		
+    imagePoints.clear();
+       
+   projectPoints(pcMat,
+                 rotationDepthToRGB, translationDepthToRGB,
+                 rgbCalibration.getDistortedIntrinsics().getCameraMatrix(),
+                 rgbCalibration.getDistCoeffs(),
+                 imagePoints);
+    
+    for(int i = 0; i < imagePoints.size(); i++) {
+	    //TODO account for fudge factor that the shader listens to
+        simpleMesh.setTexCoord(i, ofVec2f(imagePoints[i].x, imagePoints[i].y));			
+	}
 }
 
 bool ofxRGBDRenderer::isVertexValid(int index){
     return indexMap[index].valid;
 }
 
+int ofxRGBDRenderer::vertexIndex(int sequenceIndex){
+	return indexMap[sequenceIndex].vertexIndex;    
+}
+
+int ofxRGBDRenderer::getTotalPoints(){
+	return indexMap.size();
+}
 ofMesh& ofxRGBDRenderer::getMesh(){
 	return simpleMesh;
 }

@@ -25,6 +25,7 @@ class ofxRGBDMediaTake {
     string calibrationDirectory;
     string lowResVideoPath;
     string hiResVideoPath;
+    string videoThumbsPath;
     string depthFolder;
     string pairingsFile;
     

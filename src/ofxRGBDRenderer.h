@@ -38,7 +38,6 @@ class ofxRGBDRenderer {
 
     ofBaseHasTexture& getRGBTexture();
 
-	
 	void update();
 
 	//fudge factors to apply during alignment
@@ -50,7 +49,9 @@ class ofxRGBDRenderer {
 	//helps diffuse "stairstep" looking patterns by adding a bit of randomness
 	float ZFuzz;
 	
-
+    bool calculateTextureCoordinates;
+    bool forceUndistortOff;
+    bool addColors;
 	bool mirror;
     bool calibrationSetup;
 	
@@ -82,8 +83,14 @@ class ofxRGBDRenderer {
 	Calibration& getRGBCalibration();
 	Calibration& getDepthCalibration();
 	
+
     bool isVertexValid(int index);
-    bool forceUndistortOff;
+	int vertexIndex(int sequenceIndex);
+    int getTotalPoints();
+    
+    //one shot texture coordinate generation if you need it for something
+    //call this after a call to update()
+    void generateTextureCoordinates();
   protected:	
 
 	int simplify;

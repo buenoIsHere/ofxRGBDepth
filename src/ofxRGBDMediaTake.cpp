@@ -62,6 +62,10 @@ bool ofxRGBDMediaTake::loadFromFolder(string sourceMediaFolder){
 			else {
 				lowResVideoPath = dataDirectory.getPath(i);
                 hasSmallVideoFile = true;
+                videoThumbsPath = ofFilePath::removeExt(lowResVideoPath);
+                if(!ofDirectory(videoThumbsPath).exists()){
+                    ofDirectory(videoThumbsPath).create(true);
+                }
 			}
 		}		
 		

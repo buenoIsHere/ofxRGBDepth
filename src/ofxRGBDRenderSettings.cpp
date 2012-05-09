@@ -24,7 +24,6 @@ ofxRGBDRenderSettings::ofxRGBDRenderSettings(){
 	wireFrameSize = 1.;
     pointSize = 1.;
 
-
     fillHoles = false;
     kernelSize = 3;
     iterations = 1;
